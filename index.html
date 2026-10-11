@@ -21,7 +21,7 @@
 <div class="card"><h2 id="editor-title">Nova memória</h2><label for="title">Título</label><input id="title" maxlength="90">
 <label for="content">Sua história</label><textarea id="content" maxlength="3000"></textarea><div class="actions"><button id="save">Salvar memória</button><button id="cancel-edit" class="secondary hidden">Cancelar edição</button></div></div>
 <div class="card"><div class="headerrow"><h2>Meu acervo</h2><button id="export" class="secondary">Exportar JSON</button></div><div id="memories" class="empty">Carregando…</div></div>
-<div class="card"><h2>Minha conta</h2><p class="muted">Você pode solicitar a exclusão definitiva da conta e das suas memórias. Esta ação não pode ser desfeita.</p><button id="delete-account" class="danger">Excluir minha conta e memórias</button><p class="muted">A exclusão de conta precisa ser concluída pelo serviço de suporte até termos um fluxo seguro de exclusão no servidor. Você pode apagar suas memórias individualmente agora.</p></div>
+<div class="card"><h2>Minha conta</h2><p class="muted">Você pode solicitar a exclusão definitiva da conta e das suas memórias. Esta ação não pode ser desfeita.</p><button id="delete-account" class="danger">Excluir minha conta e memórias</button><p class="muted">Para excluir a conta, confirme sua senha. O banco removerá sua conta de autenticação e as memórias associadas. Esta operação não pode ser desfeita. Backups e registros operacionais podem seguir os prazos de retenção aplicáveis.</p></div>
 </section><p class="muted spaced">Guardiões, permissões para terceiros, mensagens póstumas e IA ainda não estão disponíveis.</p>
 </main>
 <script>
@@ -88,7 +88,24 @@ try{if(editing){await authorized('/rest/v1/memories?id=eq.'+encodeURIComponent(e
 else{const user=session.user?.id;if(!user)throw Error('Não encontramos seu usuário. Entre novamente.');await authorized('/rest/v1/memories',{method:'POST',body:{user_id:user,title,content},headers:{Prefer:'return=minimal'}})}
 clearEditor();await loadMemories();setStatus('Memória salva.')}catch(e){setStatus('Erro ao salvar: '+e.message,true)}finally{busy('save',false)}};
 $('export').onclick=()=>{const json=JSON.stringify({exported_at:new Date().toISOString(),memories},null,2);const obj=URL.createObjectURL(new Blob([json],{type:'application/json'}));const a=document.createElement('a');a.href=obj;a.download='legado-memorias.json';a.click();setTimeout(()=>URL.revokeObjectURL(obj),1000)};
-$('delete-account').onclick=()=>{setStatus('A exclusão integral da conta ainda depende de suporte. Não informe sua senha. Para interromper o uso, saia da conta e solicite a exclusão ao responsável pelo aplicativo.',true)};
+$('delete-account').onclick=async()=>{
+ const confirmation=prompt('Para excluir sua conta e as memórias associadas, digite EXCLUIR:');
+ if(confirmation!=='EXCLUIR'){setStatus('Exclusão cancelada.');return}
+ const password=prompt('Confirme sua senha para autorizar a exclusão. Não compartilhe sua senha com ninguém.');
+ if(!password){setStatus('Exclusão cancelada.');return}
+ busy('delete-account',true);
+ try{
+   const email=session?.user?.email;
+   if(!email)throw Error('Sessão sem e-mail. Entre novamente antes de excluir.');
+   // Autenticar novamente antes da operação irreversível.
+   const fresh=await api('/auth/v1/token?grant_type=password',{method:'POST',body:{email,password}});
+   keepSession(fresh);
+   await authorized('/rest/v1/rpc/delete_my_account',{method:'POST',body:{}});
+   setLoggedIn(null);
+   setStatus('Conta excluída. As memórias associadas à conta foram removidas do banco ativo.');
+ }catch(e){setStatus('Não foi possível excluir a conta: '+e.message,true)}
+ finally{busy('delete-account',false)}
+};
 (async()=>{
  const fragment=new URLSearchParams(location.hash.slice(1));
  const isRecovery=fragment.get('type')==='recovery';
