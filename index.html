@@ -14,6 +14,7 @@
 <label for="password">Senha</label><input id="password" type="password" autocomplete="current-password" minlength="8" required>
 <div class="actions"><button id="auth-submit">Entrar</button><button id="auth-switch" class="secondary">Criar conta</button><button id="forgot" class="inline">Esqueci a senha</button></div>
 <p class="muted">Ao se cadastrar, confirme seu e-mail pela mensagem enviada pelo Supabase. A confirmação e a recuperação dependem da configuração de envio de e-mails.</p></section>
+<section id="reset" class="card hidden"><h2>Definir nova senha</h2><p class="muted">Escolha uma nova senha para sua conta. Esta página foi aberta pelo link de recuperação enviado por e-mail.</p><label for="new-password">Nova senha</label><input id="new-password" type="password" autocomplete="new-password" minlength="8"><label for="confirm-password">Confirmar nova senha</label><input id="confirm-password" type="password" autocomplete="new-password" minlength="8"><div class="actions"><button id="update-password">Salvar nova senha</button></div></section>
 <section id="account" class="hidden">
 <div class="card"><div class="headerrow"><div><h2>Minhas memórias</h2><small id="who" class="muted"></small></div><button class="secondary" id="logout">Sair</button></div>
 <p class="muted">As memórias desta conta são sincronizadas com o Supabase. Somente o titular autenticado tem acesso nesta versão.</p></div>
@@ -78,7 +79,8 @@ $('auth-submit').onclick=async()=>{const email=$('email').value.trim(),password=
 try{if(signup){await api('/auth/v1/signup',{method:'POST',body:{email,password}});setStatus('Cadastro solicitado. Confira seu e-mail e confirme o endereço antes de entrar.');signup=false;$('auth-title').textContent='Entrar';$('auth-submit').textContent='Entrar';$('auth-switch').textContent='Criar conta'}
 else{const s=await api('/auth/v1/token?grant_type=password',{method:'POST',body:{email,password}});setLoggedIn(s);setStatus('Login realizado.')}
 }catch(e){setStatus('Não foi possível autenticar: '+e.message,true)}finally{busy('auth-submit',false)}};
-$('forgot').onclick=async()=>{const email=$('email').value.trim();if(!email){setStatus('Digite seu e-mail antes de recuperar a senha.',true);return}try{await api('/auth/v1/recover',{method:'POST',body:{email}});setStatus('Se o endereço estiver cadastrado, você receberá um e-mail de recuperação.')}catch(e){setStatus(e.message,true)}};
+$('forgot').onclick=async()=>{const email=$('email').value.trim();if(!email){setStatus('Digite seu e-mail antes de recuperar a senha.',true);return}try{await api('/auth/v1/recover',{method:'POST',body:{email},headers:{},redirectTo:undefined});setStatus('Se o endereço estiver cadastrado, você receberá um e-mail de recuperação. Abra o link no mesmo navegador.')}catch(e){setStatus(e.message,true)}};
+$('update-password').onclick=async()=>{const password=$('new-password').value,confirmPassword=$('confirm-password').value;if(password.length<8){setStatus('A senha deve ter pelo menos 8 caracteres.',true);return}if(password!==confirmPassword){setStatus('As senhas não coincidem.',true);return}busy('update-password',true);try{await authorized('/auth/v1/user',{method:'PUT',body:{password}});$('new-password').value='';$('confirm-password').value='';$('reset').classList.add('hidden');setLoggedIn(null);setStatus('Senha alterada. Entre novamente com sua nova senha.')}catch(e){setStatus('Não foi possível alterar a senha: '+e.message,true)}finally{busy('update-password',false)}};
 $('logout').onclick=async()=>{try{await authorized('/auth/v1/logout',{method:'POST'})}catch{}setLoggedIn(null);setStatus('Sessão encerrada.')};
 $('cancel-edit').onclick=clearEditor;
 $('save').onclick=async()=>{const title=$('title').value.trim(),content=$('content').value.trim();if(!title||!content){setStatus('Preencha título e conteúdo.',true);return}busy('save',true);
@@ -87,5 +89,18 @@ else{const user=session.user?.id;if(!user)throw Error('Não encontramos seu usu�
 clearEditor();await loadMemories();setStatus('Memória salva.')}catch(e){setStatus('Erro ao salvar: '+e.message,true)}finally{busy('save',false)}};
 $('export').onclick=()=>{const json=JSON.stringify({exported_at:new Date().toISOString(),memories},null,2);const obj=URL.createObjectURL(new Blob([json],{type:'application/json'}));const a=document.createElement('a');a.href=obj;a.download='legado-memorias.json';a.click();setTimeout(()=>URL.revokeObjectURL(obj),1000)};
 $('delete-account').onclick=()=>{setStatus('A exclusão integral da conta ainda depende de suporte. Não informe sua senha. Para interromper o uso, saia da conta e solicite a exclusão ao responsável pelo aplicativo.',true)};
-(async()=>{const saved=readSession();if(!saved?.refresh_token)return;try{keepSession(saved);await refreshSession();setLoggedIn(session)}catch{setLoggedIn(null)}})();
+(async()=>{
+ const fragment=new URLSearchParams(location.hash.slice(1));
+ const isRecovery=fragment.get('type')==='recovery';
+ if(isRecovery){
+  const access=fragment.get('access_token'),refresh=fragment.get('refresh_token');
+  history.replaceState(null,'',location.pathname+location.search);
+  if(!access||!refresh){setStatus('Link de recuperação inválido. Solicite um novo.',true);return}
+  try{const user=await api('/auth/v1/user',{token:access});keepSession({access_token:access,refresh_token:refresh,user,expires_at:Math.floor(Date.now()/1000)+Number(fragment.get('expires_in')||3600)});$('auth').classList.add('hidden');$('account').classList.add('hidden');$('reset').classList.remove('hidden');setStatus('Link validado. Defina sua nova senha.');return}
+  catch(e){keepSession(null);setStatus('Link inválido ou expirado. Solicite outro e-mail de recuperação.',true);return}
+ }
+ if(fragment.get('error')){history.replaceState(null,'',location.pathname+location.search);setStatus('O link não foi aceito. Solicite um novo e-mail de recuperação.',true);return}
+ const saved=readSession();if(!saved?.refresh_token)return;
+ try{keepSession(saved);await refreshSession();setLoggedIn(session)}catch{setLoggedIn(null)}
+})();
 </script></body></html>
