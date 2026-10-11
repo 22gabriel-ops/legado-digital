@@ -52,7 +52,7 @@ workflows:
       xcode: latest
       ios_signing:
         distribution_type: app_store
-        bundle_identifier: br.com.legadodigital.app
+        bundle_identifier: com.gabrielcruz.legadodigital
     integrations:
       app_store_connect: legado-apple
     scripts:
