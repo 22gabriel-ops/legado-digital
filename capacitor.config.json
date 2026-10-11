@@ -1,5 +1,5 @@
 {
-  "appId": "br.com.legadodigital.app",
+  "appId": "com.gabrielcruz.legadodigital",
   "appName": "Legado Digital",
   "webDir": "web",
   "server": {"iosScheme": "capacitor"},
