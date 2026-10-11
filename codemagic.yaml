@@ -1,3 +1,4 @@
+
 workflows:
   ios-simulator:
     name: iOS Simulator - sem assinatura
@@ -7,15 +8,37 @@ workflows:
       node: 22
       xcode: latest
     scripts:
-      - name: Instalar dependências
+      - name: Instalar dependencias
         script: npm install
-      - name: Validar JavaScript
+
+      - name: Preparar arquivos web
+        script: |
+          mkdir -p web
+          cp index.html web/
+          cp manifest.webmanifest web/
+          cp sw.js web/
+          cp icon-192.png web/
+          cp icon-512.png web/
+
+      - name: Validar projeto
         script: npm run check && npm test
+
       - name: Gerar projeto iOS
-        script: npx cap add ios && npx cap sync ios
+        script: |
+          npx cap add ios
+          npx cap sync ios
+
       - name: Compilar para simulador
         script: |
-          xcodebuild -workspace ios/App/App.xcworkspace -scheme App -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build/simulator CODE_SIGNING_ALLOWED=NO build
+          xcodebuild \
+            -workspace ios/App/App.xcworkspace \
+            -scheme App \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build/simulator \
+            CODE_SIGNING_ALLOWED=NO build
+
     artifacts:
       - build/simulator/Build/Products/Debug-iphonesimulator/*.app
       - /tmp/xcodebuild_logs/*.log
@@ -33,16 +56,38 @@ workflows:
     integrations:
       app_store_connect: legado-apple
     scripts:
-      - name: Instalar e testar
-        script: npm install && npm run check && npm test
+      - name: Instalar dependencias
+        script: npm install
+
+      - name: Preparar arquivos web
+        script: |
+          mkdir -p web
+          cp index.html web/
+          cp manifest.webmanifest web/
+          cp sw.js web/
+          cp icon-192.png web/
+          cp icon-512.png web/
+
+      - name: Validar projeto
+        script: npm run check && npm test
+
       - name: Gerar projeto iOS
-        script: npx cap add ios && npx cap sync ios
+        script: |
+          npx cap add ios
+          npx cap sync ios
+
       - name: Aplicar assinatura Apple
         script: xcode-project use-profiles
+
       - name: Gerar IPA assinado
-        script: xcode-project build-ipa --workspace ios/App/App.xcworkspace --scheme App
+        script: |
+          xcode-project build-ipa \
+            --workspace ios/App/App.xcworkspace \
+            --scheme App
+
     artifacts:
       - build/ios/ipa/*.ipa
+
     publishing:
       app_store_connect:
         auth: integration
