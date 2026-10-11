@@ -1,0 +1,7 @@
+{
+  "appId": "br.com.legadodigital.app",
+  "appName": "Legado Digital",
+  "webDir": "web",
+  "server": {"iosScheme": "capacitor"},
+  "ios": {"contentInset": "automatic", "preferredContentMode": "mobile"}
+}

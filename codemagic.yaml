@@ -1,0 +1,50 @@
+workflows:
+  ios-simulator:
+    name: iOS Simulator - sem assinatura
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      node: 22
+      xcode: latest
+    scripts:
+      - name: Instalar dependências
+        script: npm install
+      - name: Validar JavaScript
+        script: npm run check && npm test
+      - name: Gerar projeto iOS
+        script: npx cap add ios && npx cap sync ios
+      - name: Compilar para simulador
+        script: |
+          xcodebuild -workspace ios/App/App.xcworkspace -scheme App -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build/simulator CODE_SIGNING_ALLOWED=NO build
+    artifacts:
+      - build/simulator/Build/Products/Debug-iphonesimulator/*.app
+      - /tmp/xcodebuild_logs/*.log
+
+  ios-appstore:
+    name: iOS App Store - exige conta Apple
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      node: 22
+      xcode: latest
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: br.com.legadodigital.app
+    integrations:
+      app_store_connect: legado-apple
+    scripts:
+      - name: Instalar e testar
+        script: npm install && npm run check && npm test
+      - name: Gerar projeto iOS
+        script: npx cap add ios && npx cap sync ios
+      - name: Aplicar assinatura Apple
+        script: xcode-project use-profiles
+      - name: Gerar IPA assinado
+        script: xcode-project build-ipa --workspace ios/App/App.xcworkspace --scheme App
+    artifacts:
+      - build/ios/ipa/*.ipa
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        submit_to_app_store: false

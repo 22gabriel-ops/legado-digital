@@ -1,0 +1,21 @@
+{
+  "name": "legado-digital-ios",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Aplicativo local-first de memórias e legado pessoal",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "check": "node --check web/app.js && node --check web/crypto.js && node --check web/engine.js",
+    "ios:add": "npx cap add ios",
+    "ios:sync": "npx cap sync ios",
+    "ios:open": "npx cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/core": "^7.4.0",
+    "@capacitor/ios": "^7.4.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.4.0"
+  }
+}
