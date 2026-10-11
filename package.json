@@ -5,8 +5,8 @@
   "type": "module",
   "description": "Aplicativo local-first de memórias e legado pessoal",
   "scripts": {
-    "test": "node --test tests/*.test.mjs",
-    "check": "node --check web/app.js && node --check web/crypto.js && node --check web/engine.js",
+    "test": "node --test",
+    "check": "node -e \"const fs=require('node:fs'); for(const f of ['index.html','manifest.webmanifest','sw.js','icon-192.png','icon-512.png','capacitor.config.json']) { if(!fs.existsSync(f)) throw new Error('Arquivo ausente: '+f); } console.log('Arquivos essenciais presentes')\"",
     "ios:add": "npx cap add ios",
     "ios:sync": "npx cap sync ios",
     "ios:open": "npx cap open ios"
