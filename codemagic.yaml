@@ -76,6 +76,41 @@ workflows:
           npx cap add ios
           npx cap sync ios
 
+      - name: Aplicar ícone oficial e atualizar número da compilação
+        script: |
+          python3 - <<'PY'
+          import json, pathlib, subprocess
+          source = pathlib.Path('Legado_Digital_AppIcon_1024.png')
+          catalog = pathlib.Path('ios/App/App/Assets.xcassets/AppIcon.appiconset')
+          config = catalog / 'Contents.json'
+          if not source.is_file() or not config.is_file():
+              raise SystemExit('Ícone oficial ou catálogo iOS não encontrado')
+          data = json.loads(config.read_text())
+          count = 0
+          for entry in data.get('images', []):
+              filename = entry.get('filename')
+              if not filename:
+                  continue
+              size = entry.get('size', '1024x1024')
+              scale = entry.get('scale', '1x')
+              edge = int(float(size.split('x')[0]) * float(scale.rstrip('x')))
+              subprocess.run(['sips', '-s', 'format', 'png', '-z', str(edge), str(edge),
+                              str(source), '--out', str(catalog / filename)],
+                             check=True, stdout=subprocess.DEVNULL)
+              count += 1
+          if count == 0:
+              raise SystemExit('Nenhuma imagem definida no catálogo AppIcon')
+          print('Ícone oficial aplicado em', count, 'arquivo(s)')
+          project = pathlib.Path('ios/App/App.xcodeproj/project.pbxproj')
+          content = project.read_text()
+          import re
+          updated, n = re.subn(r'(CURRENT_PROJECT_VERSION\\s*=\\s*)\\d+(;)', r'\\g<1>2\\2', content)
+          if n == 0:
+              raise SystemExit('CURRENT_PROJECT_VERSION não encontrado')
+          project.write_text(updated)
+          print('Número da compilação alterado para 2')
+          PY
+
       - name: Aplicar assinatura Apple
         script: xcode-project use-profiles
 
