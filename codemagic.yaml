@@ -104,7 +104,7 @@ workflows:
           project = pathlib.Path('ios/App/App.xcodeproj/project.pbxproj')
           content = project.read_text()
           import re
-          updated, n = re.subn(r'(CURRENT_PROJECT_VERSION\\s*=\\s*)\\d+(;)', r'\\g<1>2\\2', content)
+          updated, n = re.subn(r'(CURRENT_PROJECT_VERSION\s*=\s*)\d+(;)', r'\g<1>2\2', content)
           if n == 0:
               raise SystemExit('CURRENT_PROJECT_VERSION não encontrado')
           project.write_text(updated)
