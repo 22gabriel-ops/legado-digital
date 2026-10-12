@@ -1,9 +1,28 @@
-# Permissões de guardiões
+# Permissões dos guardiões — decisão atualizada
 
-Regra aprovada: todo guardião ativo pode ler todas as conversas do legado, passadas e futuras. Apenas o titular pode conceder ou revogar o papel de guardião. Guardiões podem administrar contatos e leitores, mas não promover novos guardiões nem excluir o legado.
+O Legado Digital possui três papéis administrativos:
 
-O titular e os guardiões podem ver o histórico separado por contato. Leitores só podem consultar conversas especificamente liberadas pelo titular ou por um guardião.
+| Ação | Titular | Guardião Principal | Guardião Leitor |
+| --- | --- | --- | --- |
+| Ler todas as conversas, antigas e futuras | Sim | Sim | Sim |
+| Ver os contatos | Sim | Sim | Sim |
+| Adicionar e remover contatos | Sim | Sim | Não |
+| Adicionar guardiões Principais ou Leitores | Sim | Sim | Não |
+| Remover guardiões e alterar seus papéis | Sim | Sim | Não |
+| Excluir o legado | Sim | Não | Não |
 
-O convite de guardião requer autenticação e aceite expresso. Remover um guardião revoga imediatamente sua permissão de consulta. Todos os participantes devem ser informados antes de conversar que as respostas são geradas por IA e que o histórico pode ser lido pelo titular e pelos guardiões.
+## Regras obrigatórias
 
-Regras documentadas, ainda dependentes de implementação e testes de controle de acesso no servidor. Nunca autorizar leitura somente por lógica visual no navegador.
+- Um guardião Principal pode adicionar, remover e alterar papéis de outros guardiões, incluindo outros Principais, mas nunca retirar o titular nem excluir o legado.
+- Um guardião Leitor pode apenas ler todas as conversas e consultar os contatos. Não pode enviar mensagens, alterar contatos, autorizações ou guardiões.
+- Todo guardião ativo pode ler todas as conversas anteriores e posteriores à sua entrada.
+- A entrada de um guardião requer convite, autenticação e aceite explícito.
+- A remoção de um guardião deve revogar o acesso pelo servidor imediatamente; não é possível revogar cópias já exportadas.
+- O titular mantém acesso e autoridade total. Auditoria deve registrar concessões, alterações e remoções de permissões.
+- Pessoas que conversam com a IA devem saber, antes da conversa, que estão falando com uma representação por IA e que o histórico poderá ser consultado pelo titular e guardiões.
+- A autorização deve ser aplicada por políticas de banco de dados e funções no servidor, jamais apenas ocultando botões na interface.
+- O histórico importado do ChatGPT do titular permanece privado e separado do histórico de mensagens no WhatsApp.
+
+## Situação
+
+Especificação de produto registrada. Interface, convites, banco, políticas de permissão e testes de segurança ainda precisam ser implementados e publicados.
