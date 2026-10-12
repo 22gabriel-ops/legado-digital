@@ -39,8 +39,31 @@ workflows:
             -derivedDataPath build/simulator \
             CODE_SIGNING_ALLOWED=NO build
 
+      - name: Capturar tela real no simulador iPad de 13 polegadas
+        script: |
+          set -e
+          mkdir -p build/screenshots
+          python3 - <<'PY' > /tmp/legado_ipad_udid
+          import json, subprocess, sys
+          data = json.loads(subprocess.check_output(['xcrun','simctl','list','devices','available','--json']))
+          devices = [d for entries in data['devices'].values() for d in entries if 'iPad' in d['name'] and ('13-inch' in d['name'] or '13 inch' in d['name']) and d['state'] != 'Unavailable']
+          if not devices:
+              sys.exit('Nenhum simulador de iPad de 13 polegadas está disponível neste Xcode')
+          print(devices[0]['udid'])
+          PY
+          UDID="$(cat /tmp/legado_ipad_udid)"
+          xcrun simctl boot "$UDID" || true
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl status_bar "$UDID" override --time "9:41" --batteryState charged --batteryLevel 100 --wifiMode active --wifiBars 3 || true
+          xcrun simctl install "$UDID" build/simulator/Build/Products/Debug-iphonesimulator/App.app
+          xcrun simctl launch "$UDID" com.gabrielcruz.legadodigital
+          sleep 20
+          xcrun simctl io "$UDID" screenshot build/screenshots/Legado_Digital_iPad_13.png
+          sips -g pixelWidth -g pixelHeight build/screenshots/Legado_Digital_iPad_13.png
+
     artifacts:
       - build/simulator/Build/Products/Debug-iphonesimulator/*.app
+      - build/screenshots/*.png
       - /tmp/xcodebuild_logs/*.log
 
   ios-appstore:
