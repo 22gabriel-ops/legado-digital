@@ -21,7 +21,15 @@ async function db(path:string,init:RequestInit={}){
   if(!response.ok)throw Error("Database "+response.status+": "+(await response.text()).slice(0,250));
   const text=await response.text();return text?JSON.parse(text):null;
 }
+// Mapeamento opcional e restrito ao remetente autorizado no ambiente de teste.
+// Nunca adicionar o nono digito automaticamente para outros contatos.
+function outboundRecipient(sender:string){
+  const testSender=env("WHATSAPP_TEST_SENDER_WA_ID");
+  const testRecipient=env("WHATSAPP_TEST_RECIPIENT");
+  return testSender && testRecipient && sender===testSender ? testRecipient : sender;
+}
 async function sendWhatsApp(to:string,text:string){
+  to=outboundRecipient(to);
   const r=await fetch("https://graph.facebook.com/"+(env("META_GRAPH_VERSION")||"v23.0")+"/"+env("WHATSAPP_PHONE_NUMBER_ID")+"/messages",{
     method:"POST",headers:{Authorization:"Bearer "+env("WHATSAPP_ACCESS_TOKEN"),...jsonHeaders},
     body:JSON.stringify({messaging_product:"whatsapp",to,type:"text",text:{body:text.slice(0,3500)}})
