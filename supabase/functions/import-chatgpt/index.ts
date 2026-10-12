@@ -5,15 +5,19 @@ const BASE=Deno.env.get("SUPABASE_URL")||"";
 const KEY=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||"";
 const OPENAI=Deno.env.get("OPENAI_API_KEY")||"";
 const headers={"Content-Type":"application/json","apikey":KEY,"Authorization":"Bearer "+KEY};
-const respond=(x:unknown,status=200)=>new Response(JSON.stringify(x),{status,headers:{"Content-Type":"application/json"}});
+const cors={"Access-Control-Allow-Origin":"https://legadodigitalapp.com.br","Access-Control-Allow-Headers":"authorization, apikey, content-type","Access-Control-Allow-Methods":"POST, OPTIONS","Vary":"Origin"};
+const respond=(x:unknown,status=200)=>new Response(JSON.stringify(x),{status,headers:{"Content-Type":"application/json",...cors}});
+
 Deno.serve(async(req)=>{
+ if(req.method==="OPTIONS")return new Response(null,{status:204,headers:cors});
  if(req.method!=="POST")return respond({error:"Method not allowed"},405);
  try{
   const token=(req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
-  if(!token)return respond({error:"Unauthenticated"},401);
+  if(!token||!BASE||!KEY)return respond({error:"Unauthenticated or missing server configuration"},401);
   const auth=await fetch(BASE+"/auth/v1/user",{headers:{"apikey":Deno.env.get("SUPABASE_ANON_KEY")||"","Authorization":"Bearer "+token}});
   if(!auth.ok)return respond({error:"Unauthenticated"},401);
   const user=await auth.json();
+  if(!user?.id||!user?.email_confirmed_at)return respond({error:"Verified account required"},403);
   const payload=await req.json();
   const material=typeof payload.text==="string"?payload.text:"";
   if(material.length<10||material.length>35000)return respond({error:"Segment must be 10-35000 characters"},400);
