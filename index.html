@@ -1,5 +1,14 @@
 <!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<script>
+/* Redireciona apenas a pagina inicial do dominio comercial.
+   O app iOS e os links de autenticacao continuam intactos. */
+if (["legadodigitalapp.com.br", "www.legadodigitalapp.com.br"].includes(location.hostname)
+    && (location.pathname === "/" || location.pathname === "/index.html")
+    && !location.search && !location.hash) {
+  location.replace("/site/");
+}
+</script>
 <meta name="theme-color" content="#171c36"><title>Legado Digital · Suas memórias</title>
 <link rel="manifest" href="./manifest.webmanifest"><link rel="apple-touch-icon" href="./icon-192.png">
 <style>
