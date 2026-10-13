@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Legado Digital · Guardiões</title><meta name="theme-color" content="#faf8f3">
+<style>
+:root{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:#30281f;background:#faf8f3}*{box-sizing:border-box}body{margin:0}main{max-width:650px;padding:26px 18px 70px;margin:auto}a{color:#906b3a}h1,h2{font-family:Georgia,serif;font-weight:400}h1{font-size:37px;margin:20px 0 12px}h2{font-size:25px;margin:0 0 12px}.card{background:#fff;border:1px solid #e9dfd0;border-radius:18px;padding:25px;margin:16px 0}.muted{color:#776d61;font-size:14px;line-height:1.65}.notice{background:#fff9ed;border:1px solid #ebddc1;border-radius:12px;padding:14px;font-size:13px;line-height:1.6}label{display:block;font-size:13px;font-weight:700;margin:15px 0 7px}input,select{display:block;width:100%;padding:14px;border:1px solid #d8cbbb;border-radius:10px;background:#fff;font:inherit}button{border:0;border-radius:10px;padding:13px 18px;background:#a98249;color:#fff;font-weight:700;cursor:pointer;margin:12px 8px 0 0}button.secondary{background:#f1eadf;color:#604b32}button.danger{background:#faece7;color:#983d32}button:disabled{opacity:.5}.hidden{display:none!important}.item{border-top:1px solid #eadfcd;padding:15px 0}.item strong{display:block}.status{font-size:13px;color:#765c37}#feedback{min-height:20px;font-size:14px}#feedback.error{color:#a6372d}#feedback.ok{color:#2e684c}
+</style></head><body><main>
+<a href="./index.html">← Voltar à minha conta</a>
+<h1>Guardiões do legado</h1>
+<p class="muted">Escolha quem poderá cuidar do seu legado no futuro. Você pode indicar uma pessoa principal e uma substituta.</p>
+<div class="notice"><strong>Importante:</strong> este cadastro registra apenas sua indicação. Ninguém receberá convite, acesso a memórias ou poderes de administração agora. Os guardiões deverão aceitar formalmente o convite em uma etapa futura, com verificação de identidade e regras de liberação do legado.</div>
+<p id="feedback" role="status" aria-live="polite"></p>
+<section class="card" id="gate"><p>Verificando sua sessão…</p></section>
+<section id="panel" class="hidden">
+<div class="card"><h2>Minhas indicações</h2><div id="entries"><p class="muted">Carregando…</p></div></div>
+<div class="card"><h2 id="form-title">Indicar guardião</h2>
+<form id="guardian-form">
+<label for="role">Função</label><select id="role" required><option value="primary">Guardião principal</option><option value="alternate">Guardião substituto</option></select>
+<label for="full_name">Nome completo</label><input id="full_name" required minlength="2" maxlength="120" autocomplete="off">
+<label for="email">E-mail</label><input id="email" type="email" required maxlength="254" autocomplete="off">
+<label for="phone">WhatsApp com código do país (opcional)</label><input id="phone" type="tel" placeholder="+55 31 99999-9999" maxlength="20" autocomplete="off">
+<p class="muted">Informe contatos da pessoa apenas para registro da indicação. Antes de enviar convites, será necessário confirmar que ela concorda em participar.</p>
+<button id="save" type="submit">Salvar indicação</button><button id="cancel" type="button" class="secondary hidden">Cancelar edição</button>
+</form></div></section>
+</main>
+<script>
+'use strict';
+const BASE='https://rwzksewulqpzsdbuirrq.supabase.co';
+const KEY='sb_publishable_fxQIHucd5a62h64oCEZoIg_qcoMg3cZ';
+const STORE='legado-auth-session';
+const $=id=>document.getElementById(id);
+let session=null,guardians=[],editing=null;
+function message(s,bad=false){$('feedback').textContent=s;$('feedback').className=bad?'error':'ok'}
+function saveSession(s){session=s;if(s)localStorage.setItem(STORE,JSON.stringify(s));else localStorage.removeItem(STORE)}
+async function api(path,options={}) {
+ if(!session?.access_token)throw Error('Entre na sua conta.');
+ const call=async()=>{
+  const res=await fetch(BASE+path,{method:options.method||'GET',headers:{apikey:KEY,Authorization:'Bearer '+session.access_token,'Content-Type':'application/json',Prefer:'return=minimal'},body:options.body===undefined?undefined:JSON.stringify(options.body)});
+  if(!res.ok){let e;try{e=await res.json()}catch{}throw Error(e?.message||e?.error||'Falha no servidor ('+res.status+')')}
+  if(res.status===204)return null;const raw=await res.text();return raw?JSON.parse(raw):null;
+ };
+ if(session.expires_at&&Date.now()/1000>=session.expires_at-60)await refresh();
+ try{return await call()}catch(e){if(/jwt expired|invalid jwt/i.test(e.message)){await refresh();return call()}throw e}
+}
+async function refresh(){
+ const res=await fetch(BASE+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:session.refresh_token})});
+ if(!res.ok)throw Error('Sessão expirada. Entre novamente.');
+ saveSession(await res.json());
+}
+function reset(){editing=null;$('guardian-form').reset();$('form-title').textContent='Indicar guardião';$('cancel').classList.add('hidden');$('save').textContent='Salvar indicação'}
+function el(tag,value,className){const n=document.createElement(tag);if(value!==undefined)n.textContent=value;if(className)n.className=className;return n}
+function draw(){
+ const box=$('entries');box.replaceChildren();
+ for(const role of ['primary','alternate']){
+  const g=guardians.find(x=>x.role===role),item=el('div',undefined,'item');
+  item.append(el('strong',role==='primary'?'Guardião principal':'Guardião substituto'));
+  if(!g){item.append(el('p','Nenhuma pessoa indicada.','muted'))}
+  else{
+   item.append(el('p',g.full_name+' · '+g.email+(g.phone?' · '+g.phone:''),'muted'));
+   item.append(el('p',g.status==='pending'?'Indicação salva · convite ainda não enviado':'Status: '+g.status,'status'));
+   const edit=el('button','Editar','secondary');edit.type='button';edit.onclick=()=>{editing=g.id;$('role').value=g.role;$('full_name').value=g.full_name;$('email').value=g.email;$('phone').value=g.phone||'';$('form-title').textContent='Editar indicação';$('cancel').classList.remove('hidden');$('save').textContent='Salvar alterações';$('guardian-form').scrollIntoView({behavior:'smooth'})};
+   const del=el('button','Remover','danger');del.type='button';del.onclick=async()=>{if(!confirm('Remover esta indicação?'))return;del.disabled=true;try{await api('/rest/v1/legacy_guardians?id=eq.'+encodeURIComponent(g.id),{method:'DELETE'});reset();await load();message('Indicação removida.')}catch(e){message(e.message,true)}finally{del.disabled=false}};
+   item.append(edit,del);
+  }
+  box.append(item);
+ }
+}
+async function load(){guardians=await api('/rest/v1/legacy_guardians?select=id,full_name,email,phone,role,status&order=created_at.asc');draw()}
+$('cancel').onclick=reset;
+$('guardian-form').onsubmit=async e=>{
+ e.preventDefault();
+ const role=$('role').value,full_name=$('full_name').value.trim(),email=$('email').value.trim().toLowerCase(),phone=$('phone').value.trim()||null;
+ if(full_name.length<2||!email.includes('@')){message('Confira nome e e-mail.',true);return}
+ if(guardians.some(g=>g.role===role&&g.id!==editing)){message('Já existe uma indicação para esta função. Edite ou remova a anterior.',true);return}
+ const save=$('save');save.disabled=true;
+ try{
+  if(editing)await api('/rest/v1/legacy_guardians?id=eq.'+encodeURIComponent(editing),{method:'PATCH',body:{full_name,email,phone,role,status:'pending',updated_at:new Date().toISOString()}});
+  else await api('/rest/v1/legacy_guardians',{method:'POST',body:{owner_id:session.user.id,full_name,email,phone,role}});
+  reset();await load();message('Indicação salva com segurança. Nenhum convite foi enviado.');
+ }catch(err){message('Não foi possível salvar: '+err.message,true)}finally{save.disabled=false}
+};
+(async()=>{
+ try{
+  session=JSON.parse(localStorage.getItem(STORE)||'null');
+  if(!session?.refresh_token)throw Error('Entre na sua conta primeiro.');
+  await refresh();
+  const user=await api('/auth/v1/user');
+  session.user=user;saveSession(session);
+  $('gate').classList.add('hidden');$('panel').classList.remove('hidden');
+  await load();
+ }catch(e){$('gate').replaceChildren(el('p',e.message+'. Volte à tela inicial e faça login.'));message('Cadastro indisponível até a autenticação e a criação da tabela no Supabase.',true)}
+})();
+</script></body></html>
