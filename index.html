@@ -17,22 +17,31 @@ button:hover{filter:brightness(1.05)}button.secondary{background:#f5f0e7;color:#
 .headerrow{display:flex;justify-content:space-between;align-items:center;gap:12px}.headerrow small{overflow-wrap:anywhere}
 .inline{background:none;color:#8a693f;padding:6px;text-decoration:underline;min-height:auto}.checkboxlabel{display:flex;gap:11px;align-items:flex-start;font-size:13px;line-height:1.65;color:#62584f;font-weight:500}.checkboxlabel input{margin-top:4px;accent-color:#a78451}
 @media(max-width:480px){main{padding-top:22px}.hero{padding:30px 24px}.card{padding:25px 22px}.brand-text strong{font-size:22px}.actions button{flex:1}}
-</style>
+select{width:100%;display:block;min-height:50px;padding:12px 14px;border:1px solid #ddd4c5;border-radius:10px;background:#fff;color:#2b2825;font:inherit;cursor:pointer}select:focus-visible{outline:3px solid #d3b47a;outline-offset:2px}</style>
 <style>.intro-step{display:flex;gap:12px;align-items:flex-start;margin:16px 0;font-size:14px;color:#665e55}.number{font:500 22px Georgia,serif;color:#aa8249;min-width:27px}.privacy-link{color:#8a693f;text-decoration:underline}.privacy-foot{font-size:12px;color:#85796b;line-height:1.7;margin-top:22px}.submit{width:100%;margin-top:14px}.status{font-size:13px;line-height:1.5;margin-top:14px}.fineprint{font-size:12px;color:#817466;line-height:1.6}</style>
 </head><body><main><div class="brand"><svg class="tree-icon" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="29" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M32 51V30M32 40L20 29M32 36L44 25M32 29L25 20M32 33L37 17M20 29l-6-9M44 25l8-8" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" fill="none"/><g fill="currentColor"><ellipse cx="15" cy="17" rx="3" ry="5" transform="rotate(-35 15 17)"/><ellipse cx="23" cy="13" rx="3" ry="5" transform="rotate(-10 23 13)"/><ellipse cx="33" cy="12" rx="3" ry="5"/><ellipse cx="43" cy="13" rx="3" ry="5" transform="rotate(30 43 13)"/><ellipse cx="51" cy="22" rx="3" ry="5" transform="rotate(55 51 22)"/><ellipse cx="13" cy="29" rx="3" ry="5" transform="rotate(-60 13 29)"/><ellipse cx="24" cy="23" rx="3" ry="5" transform="rotate(-20 24 23)"/><ellipse cx="40" cy="23" rx="3" ry="5" transform="rotate(20 40 23)"/><ellipse cx="49" cy="33" rx="3" ry="5" transform="rotate(55 49 33)"/></g></svg><div class="brand-text"><strong>LEGADO</strong><span>DIGITAL</span></div></div>
 <div class="hero"><span class="tag">LEGADO DIGITAL · BRASIL</span><h1>Sua personalidade.<br>Seu legado.<br><em>Para sempre.</em></h1><p>Um único contato. Toda a sua história pelo WhatsApp — sem e-mail e sem senha.</p></div>
 <div class="card"><h2>Comece pelo WhatsApp</h2><p class="muted">Informe seu número para preparar sua jornada. A identificação será confirmada quando você iniciar a conversa pelo seu próprio WhatsApp.</p>
-<label for="phone">Seu WhatsApp com DDI e DDD</label><input id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+55 31 99999-9999" aria-describedby="phone-hint"/><p id="phone-hint" class="fineprint">Somente números brasileiros nesta fase.</p>
+<label for="country">País</label><select id="country" aria-describedby="phone-hint">
+<option value="55" selected>🇧🇷 Brasil (+55)</option>
+<option value="351" disabled>🇵🇹 Portugal (+351) — em breve</option>
+<option value="1" disabled>🇺🇸 Estados Unidos (+1) — em breve</option>
+<option value="54" disabled>🇦🇷 Argentina (+54) — em breve</option>
+<option value="52" disabled>🇲🇽 México (+52) — em breve</option>
+</select>
+<label for="phone">Número do WhatsApp com DDD</label><input id="phone" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="31 99999-9999" aria-describedby="phone-hint"/><p id="phone-hint" class="fineprint">O código +55 é incluído automaticamente. Nesta fase, atendemos apenas o Brasil.</p>
 <label class="checkboxlabel"><input id="consent" type="checkbox"/> Autorizo o contato pelo WhatsApp para construir meu legado e receber informações sobre os planos. Sei que posso pedir para parar a qualquer momento.</label>
 <button class="submit" id="start">Continuar pelo WhatsApp →</button><p class="status" id="status" role="status" aria-live="polite"></p>
 <p class="fineprint">Versão em testes. Apenas o número autorizado pela Meta poderá participar neste momento. A criação automática de contas individuais ainda está em desenvolvimento.</p></div>
 <div class="card"><h2>O que acontece depois?</h2><div class="intro-step"><span class="number">01</span><span>Você abre uma conversa com o número oficial do Legado Digital.</span></div><div class="intro-step"><span class="number">02</span><span>Escolhe a entrevista Básica ou conhece o plano Completo.</span></div><div class="intro-step"><span class="number">03</span><span>Constrói seu perfil com memórias autorizadas e controle sobre o compartilhamento.</span></div><p class="fineprint">Básico R$ 1,90 (único) · Completo R$ 19,90/mês. Pagamentos ainda não habilitados nesta tela.</p></div>
 <p class="privacy-foot">A IA é identificada como representação digital, nunca como a pessoa real. <a class="privacy-link" href="./privacidade.html">Privacidade</a> · <a class="privacy-link" href="./exclusao-de-dados.html">Exclusão de dados</a></p>
 </main><script>
-const input=document.getElementById("phone"),consent=document.getElementById("consent"),status=document.getElementById("status");
+const country=document.getElementById("country"),input=document.getElementById("phone"),consent=document.getElementById("consent"),status=document.getElementById("status");
 document.getElementById("start").addEventListener("click",()=>{
- const phone=input.value.replace(/\D/g,"");
- if(!/^55\d{10,11}$/.test(phone)){status.textContent="Informe um número brasileiro válido com +55 e DDD.";return}
+ const local=input.value.replace(/\D/g,"");
+ if(country.value!=="55"){status.textContent="Por enquanto, o serviço está disponível apenas no Brasil.";return}
+ if(!/^\d{10,11}$/.test(local)){status.textContent="Informe seu DDD e número, sem precisar digitar +55.";return}
+ const phone=country.value+local;
  if(!consent.checked){status.textContent="Autorize o contato pelo WhatsApp para continuar.";return}
  // Somente o número autorizado na conta de teste Meta. Não cria cadastro nem usa o telefone digitado para autenticação.
  if(phone!=="5531992332089"){status.textContent="Estamos em testes. Novos números serão liberados quando a linha comercial estiver pronta.";return}
