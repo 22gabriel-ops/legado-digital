@@ -21,13 +21,13 @@ Deno.serve(async req=>{
   const allowed=env("WHATSAPP_TEST_RECIPIENT").replace(/\D/g,"");
   if(!user.user_metadata?.whatsapp_opt_in||!phone||!allowed||phone!==allowed)return reply({error:"Cadastre e autorize o mesmo WhatsApp liberado na Meta"},403);
   if(!env("WHATSAPP_ACCESS_TOKEN")||!env("WHATSAPP_PHONE_NUMBER_ID"))return reply({error:"WhatsApp não configurado"},503);
-  // Meta test account ships a pre-approved English template called hello_world.
+  // O modelo legado_digital_boas_vindas deve ser cadastrado e APROVADO na Meta antes do deploy.
   const graph=env("META_GRAPH_VERSION")||"v26.0";
   const sent=await fetch("https://graph.facebook.com/"+graph+"/"+env("WHATSAPP_PHONE_NUMBER_ID")+"/messages",{
     method:"POST",headers:{Authorization:"Bearer "+env("WHATSAPP_ACCESS_TOKEN"),"Content-Type":"application/json"},
-    body:JSON.stringify({messaging_product:"whatsapp",to:allowed,type:"template",template:{name:"hello_world",language:{code:"en_US"}}})
+    body:JSON.stringify({messaging_product:"whatsapp",to:allowed,type:"template",template:{name:"legado_digital_boas_vindas",language:{code:"pt_BR"}}})
   });
   if(!sent.ok){const body=await sent.json().catch(()=>({}));console.error("Welcome template failure",sent.status,body?.error?.code||"unknown");return reply({error:"Meta recusou o envio. Consulte os logs da função.",meta_code:body?.error?.code||null},502)}
-  return reply({ok:true,message:"Mensagem de teste solicitada à Meta. Confira seu WhatsApp."});
+  return reply({ok:true,message:"Apresentação do Legado Digital solicitada à Meta. Confira seu WhatsApp."});
  }catch(e){console.error("Welcome unexpected failure",e instanceof Error?e.message:String(e));return reply({error:"Não foi possível realizar o teste"},500)}
 });
