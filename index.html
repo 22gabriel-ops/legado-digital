@@ -27,10 +27,12 @@ if (["legadodigitalapp.com.br", "www.legadodigitalapp.com.br"].includes(location
 <section id="account" class="hidden">
 <div class="card"><div class="headerrow"><div><h2>Minhas memórias</h2><small id="who" class="muted"></small></div><button class="secondary" id="logout">Sair</button></div>
 <p class="muted">As memórias desta conta são sincronizadas com o Supabase. Somente o titular autenticado tem acesso nesta versão.</p></div>
+<div class="card"><h2>Comece seu legado: entrevista</h2><p class="muted">Plano Básico · Responda às perguntas no seu ritmo. Cada resposta será salva como uma memória da sua conta. Não inclua dados sensíveis.</p><div id="interview-progress" class="muted">Pergunta 1 de 6</div><h3 id="interview-question">Qual lembrança da sua infância você mais gostaria de preservar?</h3><label for="interview-answer">Sua resposta</label><textarea id="interview-answer" maxlength="3000" placeholder="Conte com suas palavras..."></textarea><div class="actions"><button id="interview-save">Salvar resposta e avançar</button><button id="interview-next" class="secondary">Pular pergunta</button></div><p id="interview-feedback" class="muted" role="status"></p></div>
 <div class="card"><h2 id="editor-title">Nova memória</h2><label for="title">Título</label><input id="title" maxlength="90">
 <label for="content">Sua história</label><textarea id="content" maxlength="3000"></textarea><div class="actions"><button id="save">Salvar memória</button><button id="cancel-edit" class="secondary hidden">Cancelar edição</button></div></div>
 <div class="card"><div class="headerrow"><h2>Meu acervo</h2><button id="export" class="secondary">Exportar JSON</button></div><div id="memories" class="empty">Carregando…</div></div>
-<div class="card"><h2>Importar conversas do ChatGPT</h2><p class="muted">Cole somente mensagens suas que deseja transformar em um perfil de memórias. O texto será enviado à OpenAI para síntese; a função não armazena o texto bruto da importação. Revise e remova senhas, dados financeiros e informações de terceiros antes de continuar. Máximo: 35.000 caracteres por envio.</p><label for="chatgpt-import">Trecho autorizado do seu histórico</label><textarea id="chatgpt-import" maxlength="35000" placeholder="Cole aqui um trecho das suas mensagens no ChatGPT..."></textarea><p class="muted"><span id="chatgpt-count">0</span> / 35.000 caracteres</p><label><input id="chatgpt-consent" type="checkbox" style="display:inline;width:auto;margin-right:8px">Confirmo que revisei o texto e autorizo seu processamento para criar meu perfil de legado.</label><div class="actions"><button id="chatgpt-submit">Importar para meu perfil</button></div><p id="chatgpt-result" class="muted" role="status" aria-live="polite"></p></div>
+<div class="card"><h2>Legado Completo · US$ 19,90/mês</h2><p>Seu histórico completo do ChatGPT pode enriquecer seu legado. O plano inclui importação assistida e conversas em texto com política de uso justo.</p><p class="notice">O pagamento e a liberação do plano Completo ainda estão em implantação. Nenhuma assinatura será cobrada nesta versão.</p><div class="actions"><button id="upgrade-interest" class="secondary">Quero conhecer o Completo</button></div><div id="premium-import" class="hidden"><h3>Importação do ChatGPT (em implantação)</h3><p class="muted">Cole somente mensagens suas que deseja transformar em um perfil de memórias. O texto será enviado à OpenAI para síntese; a função não armazena o texto bruto da importação. Revise e remova senhas, dados financeiros e informações de terceiros antes de continuar. Máximo: 35.000 caracteres por envio.</p><label for="chatgpt-import">Trecho autorizado do seu histórico</label><textarea id="chatgpt-import" maxlength="35000" placeholder="Cole aqui um trecho das suas mensagens no ChatGPT..."></textarea><p class="muted"><span id="chatgpt-count">0</span> / 35.000 caracteres</p><label><input id="chatgpt-consent" type="checkbox" style="display:inline;width:auto;margin-right:8px">Confirmo que revisei o texto e autorizo seu processamento para criar meu perfil de legado.</label><div class="actions"><button id="chatgpt-submit">Importar para meu perfil</button></div><p id="chatgpt-result" class="muted" role="status" aria-live="polite"></p></div>
+</div></div>
 <div class="card"><h2>Minha conta</h2><p class="muted">Você pode solicitar a exclusão definitiva da conta e das suas memórias. Esta ação não pode ser desfeita.</p><button id="delete-account" class="danger">Excluir minha conta e memórias</button><p class="muted">Para excluir a conta, confirme sua senha. O banco removerá sua conta de autenticação e as memórias associadas. Esta operação não pode ser desfeita. Backups e registros operacionais podem seguir os prazos de retenção aplicáveis.</p></div>
 </section><p class="muted spaced">Guardiões, permissões para terceiros, mensagens póstumas e IA ainda não estão disponíveis.</p>
 </main>
@@ -98,6 +100,30 @@ try{if(editing){await authorized('/rest/v1/memories?id=eq.'+encodeURIComponent(e
 else{const user=session.user?.id;if(!user)throw Error('Não encontramos seu usuário. Entre novamente.');await authorized('/rest/v1/memories',{method:'POST',body:{user_id:user,title,content},headers:{Prefer:'return=minimal'}})}
 clearEditor();await loadMemories();setStatus('Memória salva.')}catch(e){setStatus('Erro ao salvar: '+e.message,true)}finally{busy('save',false)}};
 $('export').onclick=()=>{const json=JSON.stringify({exported_at:new Date().toISOString(),memories},null,2);const obj=URL.createObjectURL(new Blob([json],{type:'application/json'}));const a=document.createElement('a');a.href=obj;a.download='legado-memorias.json';a.click();setTimeout(()=>URL.revokeObjectURL(obj),1000)};
+const INTERVIEW_QUESTIONS=[
+'Qual lembrança da sua infância você mais gostaria de preservar?',
+'Quais pessoas marcaram sua vida e por quê? Evite dados pessoais delas.',
+'Qual conquista da sua vida mais representa quem você é?',
+'Que valores ou princípios você gostaria de transmitir?',
+'Que história engraçada ou especial seus familiares deveriam conhecer?',
+'Que conselho você gostaria de deixar para quem ama?'
+];
+let interviewStep=0;
+function renderInterview(){ $('interview-question').textContent=INTERVIEW_QUESTIONS[interviewStep];$('interview-progress').textContent='Pergunta '+(interviewStep+1)+' de '+INTERVIEW_QUESTIONS.length;}
+$('interview-next').onclick=()=>{interviewStep=(interviewStep+1)%INTERVIEW_QUESTIONS.length;$('interview-answer').value='';$('interview-feedback').textContent='';renderInterview()};
+$('interview-save').onclick=async()=>{
+ const answer=$('interview-answer').value.trim();
+ if(!answer){$('interview-feedback').textContent='Escreva uma resposta ou pule a pergunta.';return}
+ const user=session?.user?.id;if(!user){setStatus('Entre na sua conta antes de responder.',true);return}
+ busy('interview-save',true);
+ try{await authorized('/rest/v1/memories',{method:'POST',body:{user_id:user,title:'Entrevista: '+INTERVIEW_QUESTIONS[interviewStep].slice(0,68),content:answer},headers:{Prefer:'return=minimal'}});
+ await loadMemories();interviewStep=(interviewStep+1)%INTERVIEW_QUESTIONS.length;$('interview-answer').value='';renderInterview();$('interview-feedback').textContent='Resposta salva no seu acervo. Continue quando quiser.';}
+ catch(e){setStatus('Não foi possível salvar: '+e.message,true)}finally{busy('interview-save',false)}
+};
+$('upgrade-interest').onclick=()=>{setStatus('Plano Completo em preparação: US$ 19,90/mês. O pagamento e o upload ainda não estão disponíveis.');};
+$('chatgpt-submit').disabled=true;
+$('chatgpt-submit').title='Disponível após ativação segura do plano Completo';
+renderInterview();
 $('chatgpt-import').addEventListener('input',()=>{$('chatgpt-count').textContent=String($('chatgpt-import').value.length)});
 $('chatgpt-submit').onclick=async()=>{
  const material=$('chatgpt-import').value.trim();
