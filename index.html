@@ -51,7 +51,7 @@ button:hover{filter:brightness(1.10)}button.secondary{background:#eef1f6;color:#
 <section id="reset" class="card hidden"><h2>Definir nova senha</h2><p class="muted">Escolha uma nova senha para sua conta.</p><label for="new-password">Nova senha</label><input id="new-password" type="password" autocomplete="new-password" minlength="8"><label for="confirm-password">Confirmar nova senha</label><input id="confirm-password" type="password" autocomplete="new-password" minlength="8"><div class="actions"><button id="update-password">Salvar nova senha</button></div></section>
 <section id="account" class="hidden">
 <div class="card"><div class="headerrow"><div><h2>Conta criada</h2><small id="who" class="muted"></small></div><button class="secondary" id="logout">Sair</button></div>
-<p>Sua jornada acontece pelo WhatsApp. Enquanto configuramos o disparo automático, você pode solicitar uma mensagem de teste se for o titular autorizado.</p><div class="actions"><button id="welcome-test">Enviar mensagem de teste no WhatsApp</button></div><p class="muted" id="welcome-hint">O teste utiliza o modelo de mensagem padrão aprovado pela Meta. É necessário ter o telefone autorizado e o e-mail confirmado.</p></div>
+<p>Sua jornada acontece pelo WhatsApp. Enquanto configuramos o disparo automático, você pode solicitar uma mensagem de teste se for o titular autorizado.</p><label for="account-phone">Seu WhatsApp de teste</label><input id="account-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+55 31 99999-9999"><label class="checkboxlabel"><input id="account-consent" type="checkbox">Autorizo o Legado Digital a enviar mensagens ao meu WhatsApp para apresentar o serviço e iniciar minha entrevista. Posso interromper quando desejar.</label><div class="actions"><button id="welcome-test">Salvar número e enviar teste</button></div><p class="muted" id="welcome-hint">O teste utiliza o modelo de mensagem padrão aprovado pela Meta. É necessário ter o telefone autorizado e o e-mail confirmado.</p></div>
 <div class="card"><h2>Minha conta</h2><p class="muted">Você pode excluir sua conta e as memórias associadas, se existirem.</p><button id="delete-account" class="danger">Excluir minha conta e memórias</button><p class="muted">A exclusão exige confirmação de senha. Cópias de segurança e registros operacionais podem seguir os prazos de retenção aplicáveis.</p></div>
 </section></main>
 <script>
@@ -85,8 +85,19 @@ async function authorized(endpoint,options={}){
 }
 
 function busy(id,val){$(id).disabled=val}
-$('welcome-test').onclick=async()=>{busy('welcome-test',true);try{const r=await authorized('/functions/v1/whatsapp-onboard',{method:'POST',body:{}});setStatus(r.message||'Solicitação enviada.')}catch(e){setStatus('Teste não enviado: '+e.message,true)}finally{busy('welcome-test',false)}};
-function setLoggedIn(s){keepSession(s);const logged=!!s?.access_token;$('auth').classList.toggle('hidden',logged);$('account').classList.toggle('hidden',!logged);$('who').textContent=s?.user?.email||'';}
+$('welcome-test').onclick=async()=>{
+ const phone=$('account-phone').value.replace(/\\D/g,'');
+ if(!/^\\d{10,15}$/.test(phone)){setStatus('Informe um número com DDI e DDD.',true);return}
+ if(!$('account-consent').checked){setStatus('Autorize o contato por WhatsApp antes do teste.',true);return}
+ busy('welcome-test',true);
+ try{
+  const user=await authorized('/auth/v1/user',{method:'PUT',body:{data:{whatsapp_phone:phone,whatsapp_opt_in:true}}});
+  if(session&&user?.id){session.user=user;keepSession(session)}
+  const r=await authorized('/functions/v1/whatsapp-onboard',{method:'POST',body:{}});
+  setStatus(r.message||'Solicitação aceita pela Meta.');
+ }catch(e){setStatus('Teste não enviado: '+e.message,true)}finally{busy('welcome-test',false)}
+};
+function setLoggedIn(s){keepSession(s);const logged=!!s?.access_token;if(logged){$('account-phone').value=s?.user?.user_metadata?.whatsapp_phone||'';$('account-consent').checked=!!s?.user?.user_metadata?.whatsapp_opt_in}$('auth').classList.toggle('hidden',logged);$('account').classList.toggle('hidden',!logged);$('who').textContent=s?.user?.email||'';}
 $('auth-switch').onclick=()=>{signup=!signup;$('auth-title').textContent=signup?'Criar conta':'Entrar';$('auth-submit').textContent=signup?'Cadastrar':'Entrar';$('auth-switch').textContent=signup?'Já tenho conta':'Criar conta';$('signup-whatsapp').classList.toggle('hidden',!signup);setStatus('')};
 $('auth-submit').onclick=async()=>{const email=$('email').value.trim(),password=$('password').value;if(!email||!password){setStatus('Informe e-mail e senha.',true);return}if(password.length<8){setStatus('Use uma senha com ao menos 8 caracteres.',true);return}busy('auth-submit',true);
 try{if(signup){const phone=$('phone').value.replace(/\D/g,'');if(!/^\d{10,15}$/.test(phone)){setStatus('Informe um número de WhatsApp válido com DDI e DDD.',true);return}if(!$('whatsapp-consent').checked){setStatus('Confirme que deseja receber mensagens do Legado Digital pelo WhatsApp.',true);return}await api('/auth/v1/signup',{method:'POST',body:{email,password,data:{whatsapp_phone:phone,whatsapp_opt_in:true}}});setStatus('Cadastro solicitado. Confirme seu e-mail. O envio automático pelo WhatsApp ainda está em implantação.');signup=false;$('signup-whatsapp').classList.add('hidden');$('auth-title').textContent='Entrar';$('auth-submit').textContent='Entrar';$('auth-switch').textContent='Criar conta'}
