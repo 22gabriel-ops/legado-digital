@@ -159,6 +159,7 @@ select{width:100%;display:block;min-height:50px;padding:12px 14px;border:1px sol
 <label class="checkboxlabel"><input id="account-consent" type="checkbox">Autorizo o Legado Digital a entrar em contato pelo WhatsApp para apresentar o serviço e iniciar a entrevista. Posso pedir para parar quando desejar.</label>
 <div class="actions"><button id="save-phone">Salvar número</button><button id="cancel-phone-edit" class="secondary hidden">Cancelar alteração</button></div></div>
 <div id="saved-phone-panel" class="hidden"><p class="muted" id="saved-phone-label"></p><button id="edit-phone" class="inline">Alterar número</button><div class="actions"><button id="welcome-test" class="secondary">Enviar mensagem de teste</button></div><p class="muted">Disponível somente para o titular e número autorizados na Meta durante os testes.</p></div></div>
+<div class="card"><h2>Guardiões do meu legado</h2><p class="muted">Indique um guardião principal e um substituto. As indicações são privadas e não concedem acesso às suas memórias.</p><div class="actions"><button id="open-guardians" type="button">Cadastrar guardiões</button></div></div>
 <div class="card"><h2>Minha conta</h2><p class="muted">Você pode excluir sua conta e as memórias associadas, se existirem.</p><button id="delete-account" class="danger">Excluir minha conta e memórias</button><p class="muted">A exclusão exige confirmação de senha. Cópias de segurança e registros operacionais podem seguir os prazos de retenção aplicáveis.</p></div>
 </section></main>
 <script>
@@ -217,6 +218,7 @@ function setLoggedIn(s){
  $('who').textContent=s?.user?.email||'';
  if(logged)displaySavedPhone(s.user);
 }
+$('open-guardians').onclick=()=>{location.href='./guardioes.html'};
 $('edit-phone').onclick=()=>{$('phone-editor').classList.remove('hidden');$('saved-phone-panel').classList.add('hidden');setStatus('Confira e salve o novo número para continuar.')};
 $('cancel-phone-edit').onclick=()=>{displaySavedPhone(session?.user);setStatus('Alteração cancelada.')};
 $('save-phone').onclick=async()=>{
