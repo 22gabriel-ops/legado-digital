@@ -24,12 +24,59 @@ select{width:100%;display:block;min-height:50px;padding:12px 14px;border:1px sol
 <div class="card"><h2>Comece pelo WhatsApp</h2><p class="muted">Informe seu número para preparar sua jornada. A identificação será confirmada quando você iniciar a conversa pelo seu próprio WhatsApp.</p>
 <label for="country">País</label><select id="country" aria-describedby="phone-hint">
 <option value="55" selected>🇧🇷 Brasil (+55)</option>
-<option value="351" disabled>🇵🇹 Portugal (+351) — em breve</option>
-<option value="1" disabled>🇺🇸 Estados Unidos (+1) — em breve</option>
-<option value="54" disabled>🇦🇷 Argentina (+54) — em breve</option>
-<option value="52" disabled>🇲🇽 México (+52) — em breve</option>
+<option value="1">🇺🇸 Estados Unidos / Canadá (+1)</option>
+<option value="351">🇵🇹 Portugal (+351)</option>
+<option value="44">🇬🇧 Reino Unido (+44)</option>
+<option value="34">🇪🇸 Espanha (+34)</option>
+<option value="33">🇫🇷 França (+33)</option>
+<option value="49">🇩🇪 Alemanha (+49)</option>
+<option value="39">🇮🇹 Itália (+39)</option>
+<option value="54">🇦🇷 Argentina (+54)</option>
+<option value="52">🇲🇽 México (+52)</option>
+<option value="56">🇨🇱 Chile (+56)</option>
+<option value="57">🇨🇴 Colômbia (+57)</option>
+<option value="51">🇵🇪 Peru (+51)</option>
+<option value="598">🇺🇾 Uruguai (+598)</option>
+<option value="595">🇵🇾 Paraguai (+595)</option>
+<option value="591">🇧🇴 Bolívia (+591)</option>
+<option value="593">🇪🇨 Equador (+593)</option>
+<option value="58">🇻🇪 Venezuela (+58)</option>
+<option value="81">🇯🇵 Japão (+81)</option>
+<option value="86">🇨🇳 China (+86)</option>
+<option value="82">🇰🇷 Coreia do Sul (+82)</option>
+<option value="91">🇮🇳 Índia (+91)</option>
+<option value="61">🇦🇺 Austrália (+61)</option>
+<option value="64">🇳🇿 Nova Zelândia (+64)</option>
+<option value="27">🇿🇦 África do Sul (+27)</option>
+<option value="244">🇦🇴 Angola (+244)</option>
+<option value="258">🇲🇿 Moçambique (+258)</option>
+<option value="238">🇨🇻 Cabo Verde (+238)</option>
+<option value="41">🇨🇭 Suíça (+41)</option>
+<option value="31">🇳🇱 Países Baixos (+31)</option>
+<option value="32">🇧🇪 Bélgica (+32)</option>
+<option value="353">🇮🇪 Irlanda (+353)</option>
+<option value="46">🇸🇪 Suécia (+46)</option>
+<option value="47">🇳🇴 Noruega (+47)</option>
+<option value="45">🇩🇰 Dinamarca (+45)</option>
+<option value="358">🇫🇮 Finlândia (+358)</option>
+<option value="48">🇵🇱 Polônia (+48)</option>
+<option value="43">🇦🇹 Áustria (+43)</option>
+<option value="90">🇹🇷 Turquia (+90)</option>
+<option value="971">🇦🇪 Emirados Árabes (+971)</option>
+<option value="972">🇮🇱 Israel (+972)</option>
+<option value="966">🇸🇦 Arábia Saudita (+966)</option>
+<option value="20">🇪🇬 Egito (+20)</option>
+<option value="212">🇲🇦 Marrocos (+212)</option>
+<option value="234">🇳🇬 Nigéria (+234)</option>
+<option value="254">🇰🇪 Quênia (+254)</option>
+<option value="65">🇸🇬 Singapura (+65)</option>
+<option value="60">🇲🇾 Malásia (+60)</option>
+<option value="62">🇮🇩 Indonésia (+62)</option>
+<option value="63">🇵🇭 Filipinas (+63)</option>
+<option value="66">🇹🇭 Tailândia (+66)</option>
+<option value="84">🇻🇳 Vietnã (+84)</option>
 </select>
-<label for="phone">Número do WhatsApp com DDD</label><input id="phone" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="31 99999-9999" aria-describedby="phone-hint"/><p id="phone-hint" class="fineprint">O código +55 é incluído automaticamente. Nesta fase, atendemos apenas o Brasil.</p>
+<label for="phone">Número do WhatsApp (com código de área)</label><input id="phone" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="31 99999-9999" aria-describedby="phone-hint"/><p id="phone-hint" class="fineprint">Selecione o país do seu WhatsApp. O código internacional será incluído automaticamente.</p>
 <label class="checkboxlabel"><input id="consent" type="checkbox"/> Autorizo o contato pelo WhatsApp para construir meu legado e receber informações sobre os planos. Sei que posso pedir para parar a qualquer momento.</label>
 <button class="submit" id="start">Continuar pelo WhatsApp →</button><p class="status" id="status" role="status" aria-live="polite"></p>
 <p class="fineprint">Versão em testes. Apenas o número autorizado pela Meta poderá participar neste momento. A criação automática de contas individuais ainda está em desenvolvimento.</p></div>
@@ -39,12 +86,12 @@ select{width:100%;display:block;min-height:50px;padding:12px 14px;border:1px sol
 const country=document.getElementById("country"),input=document.getElementById("phone"),consent=document.getElementById("consent"),status=document.getElementById("status");
 document.getElementById("start").addEventListener("click",()=>{
  const local=input.value.replace(/\D/g,"");
- if(country.value!=="55"){status.textContent="Por enquanto, o serviço está disponível apenas no Brasil.";return}
- if(!/^\d{10,11}$/.test(local)){status.textContent="Informe seu DDD e número, sem precisar digitar +55.";return}
+ if(!/^\d{6,14}$/.test(local)){status.textContent="Informe seu DDD e número, sem precisar digitar +55.";return}
  const phone=country.value+local;
+ if(phone.length>15){status.textContent="Número internacional muito longo.";return}
  if(!consent.checked){status.textContent="Autorize o contato pelo WhatsApp para continuar.";return}
  // Somente o número autorizado na conta de teste Meta. Não cria cadastro nem usa o telefone digitado para autenticação.
- if(phone!=="5531992332089"){status.textContent="Estamos em testes. Novos números serão liberados quando a linha comercial estiver pronta.";return}
+ if(phone!=="5531992332089"){status.textContent="País selecionado com sucesso. O serviço ainda está em testes e seu número não está autorizado para esta fase.";return}
  const to="15556683464",message=encodeURIComponent("COMEÇAR LEGADO DIGITAL");
  status.textContent="Abrindo o WhatsApp. Envie a mensagem para iniciar o teste. Seu perfil individual ainda não será criado automaticamente.";
  window.location.href="https://wa.me/"+to+"?text="+message;
