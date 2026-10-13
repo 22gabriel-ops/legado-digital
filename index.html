@@ -100,7 +100,65 @@ select{width:100%;display:block;min-height:50px;padding:12px 14px;border:1px sol
 <section id="reset" class="card hidden"><h2>Definir nova senha</h2><p class="muted">Escolha uma nova senha para sua conta.</p><label for="new-password">Nova senha</label><input id="new-password" type="password" autocomplete="new-password" minlength="8"><label for="confirm-password">Confirmar nova senha</label><input id="confirm-password" type="password" autocomplete="new-password" minlength="8"><div class="actions"><button id="update-password">Salvar nova senha</button></div></section>
 <section id="account" class="hidden">
 <div class="card"><div class="headerrow"><div><h2>Conta criada</h2><small id="who" class="muted"></small></div><button class="secondary" id="logout">Sair</button></div>
-<p>Sua jornada acontece pelo WhatsApp. Enquanto configuramos o disparo automático, você pode solicitar uma mensagem de teste se for o titular autorizado.</p><label for="account-phone">Seu WhatsApp de teste</label><input id="account-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+55 31 99999-9999"><label class="checkboxlabel"><input id="account-consent" type="checkbox">Autorizo o Legado Digital a enviar mensagens ao meu WhatsApp para apresentar o serviço e iniciar minha entrevista. Posso interromper quando desejar.</label><div class="actions"><button id="welcome-test">Salvar número e enviar teste</button></div><p class="muted" id="welcome-hint">O teste utiliza o modelo de mensagem padrão aprovado pela Meta. É necessário ter o telefone autorizado e o e-mail confirmado.</p></div>
+<p>Cadastre seu número de WhatsApp para receber as mensagens do Legado Digital. Você poderá alterá-lo quando precisar.</p>
+<label for="account-country">País do WhatsApp</label><select id="account-country">
+<option value="55" selected>🇧🇷 Brasil (+55)</option>
+<option value="1">🇺🇸 Estados Unidos / Canadá (+1)</option>
+<option value="351">🇵🇹 Portugal (+351)</option>
+<option value="44">🇬🇧 Reino Unido (+44)</option>
+<option value="34">🇪🇸 Espanha (+34)</option>
+<option value="33">🇫🇷 França (+33)</option>
+<option value="49">🇩🇪 Alemanha (+49)</option>
+<option value="39">🇮🇹 Itália (+39)</option>
+<option value="54">🇦🇷 Argentina (+54)</option>
+<option value="52">🇲🇽 México (+52)</option>
+<option value="56">🇨🇱 Chile (+56)</option>
+<option value="57">🇨🇴 Colômbia (+57)</option>
+<option value="51">🇵🇪 Peru (+51)</option>
+<option value="598">🇺🇾 Uruguai (+598)</option>
+<option value="595">🇵🇾 Paraguai (+595)</option>
+<option value="591">🇧🇴 Bolívia (+591)</option>
+<option value="593">🇪🇨 Equador (+593)</option>
+<option value="58">🇻🇪 Venezuela (+58)</option>
+<option value="81">🇯🇵 Japão (+81)</option>
+<option value="86">🇨🇳 China (+86)</option>
+<option value="82">🇰🇷 Coreia do Sul (+82)</option>
+<option value="91">🇮🇳 Índia (+91)</option>
+<option value="61">🇦🇺 Austrália (+61)</option>
+<option value="64">🇳🇿 Nova Zelândia (+64)</option>
+<option value="27">🇿🇦 África do Sul (+27)</option>
+<option value="244">🇦🇴 Angola (+244)</option>
+<option value="258">🇲🇿 Moçambique (+258)</option>
+<option value="238">🇨🇻 Cabo Verde (+238)</option>
+<option value="41">🇨🇭 Suíça (+41)</option>
+<option value="31">🇳🇱 Países Baixos (+31)</option>
+<option value="32">🇧🇪 Bélgica (+32)</option>
+<option value="353">🇮🇪 Irlanda (+353)</option>
+<option value="46">🇸🇪 Suécia (+46)</option>
+<option value="47">🇳🇴 Noruega (+47)</option>
+<option value="45">🇩🇰 Dinamarca (+45)</option>
+<option value="358">🇫🇮 Finlândia (+358)</option>
+<option value="48">🇵🇱 Polônia (+48)</option>
+<option value="43">🇦🇹 Áustria (+43)</option>
+<option value="90">🇹🇷 Turquia (+90)</option>
+<option value="971">🇦🇪 Emirados Árabes (+971)</option>
+<option value="972">🇮🇱 Israel (+972)</option>
+<option value="966">🇸🇦 Arábia Saudita (+966)</option>
+<option value="20">🇪🇬 Egito (+20)</option>
+<option value="212">🇲🇦 Marrocos (+212)</option>
+<option value="234">🇳🇬 Nigéria (+234)</option>
+<option value="254">🇰🇪 Quênia (+254)</option>
+<option value="65">🇸🇬 Singapura (+65)</option>
+<option value="60">🇲🇾 Malásia (+60)</option>
+<option value="62">🇮🇩 Indonésia (+62)</option>
+<option value="63">🇵🇭 Filipinas (+63)</option>
+<option value="66">🇹🇭 Tailândia (+66)</option>
+<option value="84">🇻🇳 Vietnã (+84)</option>
+</select>
+<label for="account-phone">Número com DDD / código de área</label><input id="account-phone" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="31 99999-9999">
+<label class="checkboxlabel"><input id="account-consent" type="checkbox">Autorizo o Legado Digital a entrar em contato pelo WhatsApp para apresentar o serviço e iniciar a entrevista. Posso pedir para parar quando desejar.</label>
+<div class="actions"><button id="save-phone">Salvar número</button></div>
+<div id="saved-phone-panel" class="hidden"><p class="muted" id="saved-phone-label"></p><div class="actions"><button id="welcome-test" class="secondary">Enviar mensagem de teste</button></div><p class="muted">Disponível somente para o titular e número autorizados na Meta durante os testes.</p></div></div>
 <div class="card"><h2>Minha conta</h2><p class="muted">Você pode excluir sua conta e as memórias associadas, se existirem.</p><button id="delete-account" class="danger">Excluir minha conta e memórias</button><p class="muted">A exclusão exige confirmação de senha. Cópias de segurança e registros operacionais podem seguir os prazos de retenção aplicáveis.</p></div>
 </section></main>
 <script>
@@ -134,19 +192,48 @@ async function authorized(endpoint,options={}){
 }
 
 function busy(id,val){$(id).disabled=val}
-$('welcome-test').onclick=async()=>{
- const phone=$('account-phone').value.replace(/\D/g,'');
- if(!/^\d{10,15}$/.test(phone)){setStatus('Informe um número com DDI e DDD.',true);return}
- if(!$('account-consent').checked){setStatus('Autorize o contato por WhatsApp antes do teste.',true);return}
- busy('welcome-test',true);
+function countryPhone(){
+ const local=$('account-phone').value.replace(/\D/g,'');
+ const digits=$('account-country').value+local;
+ if(local.length<6||digits.length>15||!/^\d+$/.test(digits))throw Error('Informe um número internacional válido com DDD/código de área.');
+ return digits;
+}
+function displaySavedPhone(user){
+ const saved=String(user?.user_metadata?.whatsapp_phone||'');
+ const agreed=!!user?.user_metadata?.whatsapp_opt_in;
+ const select=$('account-country');
+ const codes=[...select.options].map(o=>o.value).sort((a,b)=>b.length-a.length);
+ const code=codes.find(v=>saved.startsWith(v));
+ if(code){select.value=code;$('account-phone').value=saved.slice(code.length)}else{$('account-phone').value=saved}
+ $('account-consent').checked=agreed;
+ $('saved-phone-panel').classList.toggle('hidden',!saved||!agreed);
+ $('saved-phone-label').textContent=saved&&agreed?'WhatsApp salvo: +'+saved:'';
+}
+function setLoggedIn(s){
+ keepSession(s);const logged=!!s?.access_token;
+ $('auth').classList.toggle('hidden',logged);$('account').classList.toggle('hidden',!logged);
+ $('who').textContent=s?.user?.email||'';
+ if(logged)displaySavedPhone(s.user);
+}
+$('save-phone').onclick=async()=>{
+ let phone;try{phone=countryPhone()}catch(e){setStatus(e.message,true);return}
+ if(!$('account-consent').checked){setStatus('Autorize o contato antes de salvar o número.',true);return}
+ busy('save-phone',true);
  try{
   const user=await authorized('/auth/v1/user',{method:'PUT',body:{data:{whatsapp_phone:phone,whatsapp_opt_in:true}}});
-  if(session&&user?.id){session.user=user;keepSession(session)}
-  const r=await authorized('/functions/v1/whatsapp-onboard',{method:'POST',body:{}});
-  setStatus(r.message||'Solicitação aceita pela Meta.');
- }catch(e){setStatus('Teste não enviado: '+e.message,true)}finally{busy('welcome-test',false)}
+  session.user=user;keepSession(session);displaySavedPhone(user);
+  setStatus('WhatsApp salvo. Agora você pode solicitar uma mensagem de teste.');
+ }catch(e){setStatus('Não foi possível salvar: '+e.message,true)}finally{busy('save-phone',false)}
 };
-function setLoggedIn(s){keepSession(s);const logged=!!s?.access_token;if(logged){$('account-phone').value=s?.user?.user_metadata?.whatsapp_phone||'';$('account-consent').checked=!!s?.user?.user_metadata?.whatsapp_opt_in}$('auth').classList.toggle('hidden',logged);$('account').classList.toggle('hidden',!logged);$('who').textContent=s?.user?.email||'';}
+$('welcome-test').onclick=async()=>{
+ if($('saved-phone-panel').classList.contains('hidden')){setStatus('Salve seu WhatsApp antes do teste.',true);return}
+ const saved=String(session?.user?.user_metadata?.whatsapp_phone||'');
+ let entered;try{entered=countryPhone()}catch(e){setStatus(e.message,true);return}
+ if(saved!==entered){setStatus('Você alterou o número. Clique em Salvar número antes de testar.',true);return}
+ busy('welcome-test',true);
+ try{const r=await authorized('/functions/v1/whatsapp-onboard',{method:'POST',body:{}});setStatus(r.message||'Solicitação enviada à Meta.')}
+ catch(e){setStatus('Teste não enviado: '+e.message,true)}finally{busy('welcome-test',false)}
+};
 $('auth-switch').onclick=()=>{signup=!signup;$('auth-title').textContent=signup?'Criar conta':'Entrar';$('auth-submit').textContent=signup?'Cadastrar':'Entrar';$('auth-switch').textContent=signup?'Já tenho conta':'Criar conta';$('signup-whatsapp').classList.toggle('hidden',!signup);setStatus('')};
 $('auth-submit').onclick=async()=>{const email=$('email').value.trim(),password=$('password').value;if(!email||!password){setStatus('Informe e-mail e senha.',true);return}if(password.length<8){setStatus('Use uma senha com ao menos 8 caracteres.',true);return}busy('auth-submit',true);
 try{if(signup){const local=$('phone').value.replace(/\D/g,'');const phone=$('country').value+local;if(!/^\d{7,15}$/.test(phone)){setStatus('Informe um número de WhatsApp válido com código de área.',true);return}if(!$('whatsapp-consent').checked){setStatus('Confirme que deseja receber mensagens do Legado Digital pelo WhatsApp.',true);return}await api('/auth/v1/signup',{method:'POST',body:{email,password,data:{whatsapp_phone:phone,whatsapp_opt_in:true}}});setStatus('Cadastro solicitado. Confirme seu e-mail. O envio automático pelo WhatsApp ainda está em implantação.');signup=false;$('signup-whatsapp').classList.add('hidden');$('auth-title').textContent='Entrar';$('auth-submit').textContent='Entrar';$('auth-switch').textContent='Criar conta'}
