@@ -1,17 +1,5 @@
-<!doctype html>
-<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<script>
-/* Redireciona apenas a pagina inicial do dominio comercial.
-   O app iOS e os links de autenticacao continuam intactos. */
-if (["legadodigitalapp.com.br", "www.legadodigitalapp.com.br"].includes(location.hostname)
-    && (location.pathname === "/" || location.pathname === "/index.html")
-    && !location.search && !location.hash) {
-  location.replace("/site/");
-}
-</script>
-<meta name="theme-color" content="#faf8f3"><title>Legado Digital · Cadastro</title>
-<link rel="manifest" href="./manifest.webmanifest"><link rel="apple-touch-icon" href="./icon-192.png">
-
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#faf8f3"><meta name="description" content="Crie seu Legado Digital diretamente pelo WhatsApp, sem e-mail ou senha."><title>Legado Digital · Começar pelo WhatsApp</title><link rel="manifest" href="./manifest.webmanifest"><link rel="apple-touch-icon" href="./icon-192.png">
+<script>if(["legadodigitalapp.com.br","www.legadodigitalapp.com.br"].includes(location.hostname)&&(location.pathname==="/"||location.pathname==="/index.html")&&!location.search&&!location.hash){location.replace("/site/")}</script>
 <style>
 :root{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:#2b2825;background:#faf8f3;font-synthesis:none}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(ellipse at 105% 0,#eadcc31f,transparent 48%),#faf8f3}main{width:min(100% - 36px,610px);margin:auto;padding:34px 0 86px}
 .brand{display:flex;align-items:center;gap:12px;margin:0 0 31px;color:#29241f;text-decoration:none}.tree-icon{height:52px;width:52px;flex-shrink:0;color:#af8950}.brand-text{display:flex;flex-direction:column;line-height:1.08;gap:5px}.brand-text strong{font:500 25px/1 Georgia,"Times New Roman",serif;letter-spacing:.23em}.brand-text span{font-size:10px;letter-spacing:.55em;color:#ac864f;font-weight:750;padding-left:3px}
@@ -30,110 +18,26 @@ button:hover{filter:brightness(1.05)}button.secondary{background:#f5f0e7;color:#
 .inline{background:none;color:#8a693f;padding:6px;text-decoration:underline;min-height:auto}.checkboxlabel{display:flex;gap:11px;align-items:flex-start;font-size:13px;line-height:1.65;color:#62584f;font-weight:500}.checkboxlabel input{margin-top:4px;accent-color:#a78451}
 @media(max-width:480px){main{padding-top:22px}.hero{padding:30px 24px}.card{padding:25px 22px}.brand-text strong{font-size:22px}.actions button{flex:1}}
 </style>
-</head><body><main>
-<div class="brand"><svg class="tree-icon" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="29" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M32 51V30M32 40L20 29M32 36L44 25M32 29L25 20M32 33L37 17M20 29l-6-9M44 25l8-8" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" fill="none"/><g fill="currentColor"><ellipse cx="15" cy="17" rx="3" ry="5" transform="rotate(-35 15 17)"/><ellipse cx="23" cy="13" rx="3" ry="5" transform="rotate(-10 23 13)"/><ellipse cx="33" cy="12" rx="3" ry="5"/><ellipse cx="43" cy="13" rx="3" ry="5" transform="rotate(30 43 13)"/><ellipse cx="51" cy="22" rx="3" ry="5" transform="rotate(55 51 22)"/><ellipse cx="13" cy="29" rx="3" ry="5" transform="rotate(-60 13 29)"/><ellipse cx="24" cy="23" rx="3" ry="5" transform="rotate(-20 24 23)"/><ellipse cx="40" cy="23" rx="3" ry="5" transform="rotate(20 40 23)"/><ellipse cx="49" cy="33" rx="3" ry="5" transform="rotate(55 49 33)"/></g></svg><div class="brand-text"><strong>LEGADO</strong><span>DIGITAL</span></div></div>
-<div class="hero"><div class="tag">VERSÃO 1.0 · TESTE</div><h1>Sua personalidade.<br>Seu legado.<br><em>Para sempre.</em></h1><p>Crie sua conta com seu WhatsApp. Seu Legado Digital conduzirá a entrevista e apresentará os planos diretamente na conversa.</p></div>
-<p class="notice"><strong>Em testes.</strong> O primeiro contato automático ainda precisa ser ativado no servidor. Não envie informações sensíveis pelo WhatsApp.</p>
-<div id="status" role="status" aria-live="polite"></div>
-<section id="auth" class="card"><h2 id="auth-title">Entrar</h2>
-<label for="email">E-mail</label><input id="email" type="email" autocomplete="email" required>
-<label for="password">Senha</label><input id="password" type="password" autocomplete="current-password" minlength="8" required>
-<div id="signup-whatsapp" class="hidden">
-<label for="phone">WhatsApp com DDI e DDD</label><input id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+55 31 99999-9999">
-<label class="checkboxlabel"><input id="whatsapp-consent" type="checkbox">Autorizo o Legado Digital a me enviar mensagens pelo WhatsApp para iniciar a entrevista, responder às minhas mensagens e informar sobre os planos. Posso pedir para parar quando quiser.</label>
-<p class="muted">Seu número será usado para receber a apresentação e a entrevista. O primeiro envio depende da configuração da Meta.</p></div>
-<div class="actions"><button id="auth-submit">Entrar</button><button id="auth-switch" class="secondary">Criar conta</button><button id="forgot" class="inline">Esqueci a senha</button></div>
-<p class="muted">Ao se cadastrar, confirme seu e-mail. Nenhum pagamento será cobrado nesta versão de testes.</p></section>
-<section id="reset" class="card hidden"><h2>Definir nova senha</h2><p class="muted">Escolha uma nova senha para sua conta.</p><label for="new-password">Nova senha</label><input id="new-password" type="password" autocomplete="new-password" minlength="8"><label for="confirm-password">Confirmar nova senha</label><input id="confirm-password" type="password" autocomplete="new-password" minlength="8"><div class="actions"><button id="update-password">Salvar nova senha</button></div></section>
-<section id="account" class="hidden">
-<div class="card"><div class="headerrow"><div><h2>Conta criada</h2><small id="who" class="muted"></small></div><button class="secondary" id="logout">Sair</button></div>
-<p>Sua jornada acontece pelo WhatsApp. Enquanto configuramos o disparo automático, você pode solicitar uma mensagem de teste se for o titular autorizado.</p><label for="account-phone">Seu WhatsApp de teste</label><input id="account-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+55 31 99999-9999"><label class="checkboxlabel"><input id="account-consent" type="checkbox">Autorizo o Legado Digital a enviar mensagens ao meu WhatsApp para apresentar o serviço e iniciar minha entrevista. Posso interromper quando desejar.</label><div class="actions"><button id="welcome-test">Salvar número e enviar teste</button></div><p class="muted" id="welcome-hint">O envio utiliza o modelo de mensagem configurado na Meta. Disponível apenas para o número autorizado de teste.</p></div>
-<div class="card"><h2>Minha conta</h2><p class="muted">Você pode excluir sua conta e as memórias associadas, se existirem.</p><button id="delete-account" class="danger">Excluir minha conta e memórias</button><p class="muted">A exclusão exige confirmação de senha. Cópias de segurança e registros operacionais podem seguir os prazos de retenção aplicáveis.</p></div>
-</section></main>
-<script>
-'use strict';
-const BASE='https://rwzksewulqpzsdbuirrq.supabase.co';
-const KEY='sb_publishable_fxQIHucd5a62h64oCEZoIg_qcoMg3cZ';
-const STORE='legado-auth-session';
-const $=id=>document.getElementById(id);
-let session=null,signup=false;
-const setStatus=(message,error=false)=>{const el=$('status');el.textContent=message;el.className=error?'error':'ok'};
-function readSession(){try{return JSON.parse(localStorage.getItem(STORE)||'null')}catch{return null}}
-function keepSession(s){session=s;try{if(s)localStorage.setItem(STORE,JSON.stringify(s));else localStorage.removeItem(STORE)}catch{}}
-const baseHeaders=()=>({'apikey':KEY,'Content-Type':'application/json'});
-async function api(endpoint,{method='GET',body,token,headers={}}={}) {
- const h={...baseHeaders(),...headers};if(token)h.Authorization='Bearer '+token;
- let response;try{response=await fetch(BASE+endpoint,{method,headers:h,body:body===undefined?undefined:JSON.stringify(body)})}catch{throw Error('Sem conexão. Verifique sua internet.')}
- let data=null;const raw=await response.text();try{data=raw?JSON.parse(raw):null}catch{data=raw}
- if(!response.ok)throw Error(typeof data==='object'?(data.msg||data.error_description||data.message||data.error||'Erro do servidor'):String(data));
- return data;
-}
-async function refreshSession(){
- if(!session?.refresh_token)throw Error('Sessão encerrada');
- const s=await api('/auth/v1/token?grant_type=refresh_token',{method:'POST',body:{refresh_token:session.refresh_token}});
- keepSession(s);return s;
-}
-async function authorized(endpoint,options={}){
- if(!session?.access_token)throw Error('Entre na sua conta.');
- if(session.expires_at&&Date.now()/1000>session.expires_at-60)await refreshSession();
- try{return await api(endpoint,{...options,token:session.access_token})}
- catch(e){if(/jwt expired|invalid jwt|token has expired/i.test(e.message)){await refreshSession();return api(endpoint,{...options,token:session.access_token})}throw e}
-}
-
-function busy(id,val){$(id).disabled=val}
-$('welcome-test').onclick=async()=>{
- const phone=$('account-phone').value.replace(/\D/g,'');
- if(!/^\d{10,15}$/.test(phone)){setStatus('Informe um número com DDI e DDD.',true);return}
- if(!$('account-consent').checked){setStatus('Autorize o contato por WhatsApp antes do teste.',true);return}
- busy('welcome-test',true);
- try{
-  const user=await authorized('/auth/v1/user',{method:'PUT',body:{data:{whatsapp_phone:phone,whatsapp_opt_in:true}}});
-  if(session&&user?.id){session.user=user;keepSession(session)}
-  const r=await authorized('/functions/v1/whatsapp-onboard',{method:'POST',body:{}});
-  setStatus(r.message||'Solicitação aceita pela Meta.');
- }catch(e){setStatus('Teste não enviado: '+e.message,true)}finally{busy('welcome-test',false)}
-};
-function setLoggedIn(s){keepSession(s);const logged=!!s?.access_token;if(logged){$('account-phone').value=s?.user?.user_metadata?.whatsapp_phone||'';$('account-consent').checked=!!s?.user?.user_metadata?.whatsapp_opt_in}$('auth').classList.toggle('hidden',logged);$('account').classList.toggle('hidden',!logged);$('who').textContent=s?.user?.email||'';}
-$('auth-switch').onclick=()=>{signup=!signup;$('auth-title').textContent=signup?'Criar conta':'Entrar';$('auth-submit').textContent=signup?'Cadastrar':'Entrar';$('auth-switch').textContent=signup?'Já tenho conta':'Criar conta';$('signup-whatsapp').classList.toggle('hidden',!signup);setStatus('')};
-$('auth-submit').onclick=async()=>{const email=$('email').value.trim(),password=$('password').value;if(!email||!password){setStatus('Informe e-mail e senha.',true);return}if(password.length<8){setStatus('Use uma senha com ao menos 8 caracteres.',true);return}busy('auth-submit',true);
-try{if(signup){const phone=$('phone').value.replace(/\D/g,'');if(!/^\d{10,15}$/.test(phone)){setStatus('Informe um número de WhatsApp válido com DDI e DDD.',true);return}if(!$('whatsapp-consent').checked){setStatus('Confirme que deseja receber mensagens do Legado Digital pelo WhatsApp.',true);return}await api('/auth/v1/signup',{method:'POST',body:{email,password,data:{whatsapp_phone:phone,whatsapp_opt_in:true}}});setStatus('Cadastro solicitado. Confirme seu e-mail. O envio automático pelo WhatsApp ainda está em implantação.');signup=false;$('signup-whatsapp').classList.add('hidden');$('auth-title').textContent='Entrar';$('auth-submit').textContent='Entrar';$('auth-switch').textContent='Criar conta'}
-else{const s=await api('/auth/v1/token?grant_type=password',{method:'POST',body:{email,password}});setLoggedIn(s);setStatus('Login realizado.')}
-}catch(e){setStatus('Não foi possível autenticar: '+e.message,true)}finally{busy('auth-submit',false)}};
-$('forgot').onclick=async()=>{const email=$('email').value.trim();if(!email){setStatus('Digite seu e-mail antes de recuperar a senha.',true);return}try{await api('/auth/v1/recover',{method:'POST',body:{email},headers:{},redirectTo:undefined});setStatus('Se o endereço estiver cadastrado, você receberá um e-mail de recuperação. Abra o link no mesmo navegador.')}catch(e){setStatus(e.message,true)}};
-$('update-password').onclick=async()=>{const password=$('new-password').value,confirmPassword=$('confirm-password').value;if(password.length<8){setStatus('A senha deve ter pelo menos 8 caracteres.',true);return}if(password!==confirmPassword){setStatus('As senhas não coincidem.',true);return}busy('update-password',true);try{await authorized('/auth/v1/user',{method:'PUT',body:{password}});$('new-password').value='';$('confirm-password').value='';$('reset').classList.add('hidden');setLoggedIn(null);setStatus('Senha alterada. Entre novamente com sua nova senha.')}catch(e){setStatus('Não foi possível alterar a senha: '+e.message,true)}finally{busy('update-password',false)}};
-$('logout').onclick=async()=>{try{await authorized('/auth/v1/logout',{method:'POST'})}catch{}setLoggedIn(null);setStatus('Sessão encerrada.')};
-
-$('delete-account').onclick=async()=>{
- const confirmation=prompt('Para excluir sua conta e as memórias associadas, digite EXCLUIR:');
- if(confirmation!=='EXCLUIR'){setStatus('Exclusão cancelada.');return}
- const password=prompt('Confirme sua senha para autorizar a exclusão. Não compartilhe sua senha com ninguém.');
- if(!password){setStatus('Exclusão cancelada.');return}
- busy('delete-account',true);
- try{
-   const email=session?.user?.email;
-   if(!email)throw Error('Sessão sem e-mail. Entre novamente antes de excluir.');
-   // Autenticar novamente antes da operação irreversível.
-   const fresh=await api('/auth/v1/token?grant_type=password',{method:'POST',body:{email,password}});
-   keepSession(fresh);
-   await authorized('/rest/v1/rpc/delete_my_account',{method:'POST',body:{}});
-   setLoggedIn(null);
-   setStatus('Conta excluída. As memórias associadas à conta foram removidas do banco ativo.');
- }catch(e){setStatus('Não foi possível excluir a conta: '+e.message,true)}
- finally{busy('delete-account',false)}
-};
-
-(async()=>{
- const fragment=new URLSearchParams(location.hash.slice(1));
- const isRecovery=fragment.get('type')==='recovery';
- if(isRecovery){
-  const access=fragment.get('access_token'),refresh=fragment.get('refresh_token');
-  history.replaceState(null,'',location.pathname+location.search);
-  if(!access||!refresh){setStatus('Link de recuperação inválido. Solicite um novo.',true);return}
-  try{const user=await api('/auth/v1/user',{token:access});keepSession({access_token:access,refresh_token:refresh,user,expires_at:Math.floor(Date.now()/1000)+Number(fragment.get('expires_in')||3600)});$('auth').classList.add('hidden');$('account').classList.add('hidden');$('reset').classList.remove('hidden');setStatus('Link validado. Defina sua nova senha.');return}
-  catch(e){keepSession(null);setStatus('Link inválido ou expirado. Solicite outro e-mail de recuperação.',true);return}
- }
- if(fragment.get('error')){history.replaceState(null,'',location.pathname+location.search);setStatus('O link não foi aceito. Solicite um novo e-mail de recuperação.',true);return}
- const saved=readSession();if(!saved?.refresh_token)return;
- try{keepSession(saved);await refreshSession();setLoggedIn(session)}catch{setLoggedIn(null)}
-})();
+<style>.intro-step{display:flex;gap:12px;align-items:flex-start;margin:16px 0;font-size:14px;color:#665e55}.number{font:500 22px Georgia,serif;color:#aa8249;min-width:27px}.privacy-link{color:#8a693f;text-decoration:underline}.privacy-foot{font-size:12px;color:#85796b;line-height:1.7;margin-top:22px}.submit{width:100%;margin-top:14px}.status{font-size:13px;line-height:1.5;margin-top:14px}.fineprint{font-size:12px;color:#817466;line-height:1.6}</style>
+</head><body><main><div class="brand"><svg class="tree-icon" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="29" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M32 51V30M32 40L20 29M32 36L44 25M32 29L25 20M32 33L37 17M20 29l-6-9M44 25l8-8" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" fill="none"/><g fill="currentColor"><ellipse cx="15" cy="17" rx="3" ry="5" transform="rotate(-35 15 17)"/><ellipse cx="23" cy="13" rx="3" ry="5" transform="rotate(-10 23 13)"/><ellipse cx="33" cy="12" rx="3" ry="5"/><ellipse cx="43" cy="13" rx="3" ry="5" transform="rotate(30 43 13)"/><ellipse cx="51" cy="22" rx="3" ry="5" transform="rotate(55 51 22)"/><ellipse cx="13" cy="29" rx="3" ry="5" transform="rotate(-60 13 29)"/><ellipse cx="24" cy="23" rx="3" ry="5" transform="rotate(-20 24 23)"/><ellipse cx="40" cy="23" rx="3" ry="5" transform="rotate(20 40 23)"/><ellipse cx="49" cy="33" rx="3" ry="5" transform="rotate(55 49 33)"/></g></svg><div class="brand-text"><strong>LEGADO</strong><span>DIGITAL</span></div></div>
+<div class="hero"><span class="tag">LEGADO DIGITAL · BRASIL</span><h1>Sua personalidade.<br>Seu legado.<br><em>Para sempre.</em></h1><p>Um único contato. Toda a sua história pelo WhatsApp — sem e-mail e sem senha.</p></div>
+<div class="card"><h2>Comece pelo WhatsApp</h2><p class="muted">Informe seu número para preparar sua jornada. A identificação será confirmada quando você iniciar a conversa pelo seu próprio WhatsApp.</p>
+<label for="phone">Seu WhatsApp com DDI e DDD</label><input id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+55 31 99999-9999" aria-describedby="phone-hint"/><p id="phone-hint" class="fineprint">Somente números brasileiros nesta fase.</p>
+<label class="checkboxlabel"><input id="consent" type="checkbox"/> Autorizo o contato pelo WhatsApp para construir meu legado e receber informações sobre os planos. Sei que posso pedir para parar a qualquer momento.</label>
+<button class="submit" id="start">Continuar pelo WhatsApp →</button><p class="status" id="status" role="status" aria-live="polite"></p>
+<p class="fineprint">Versão em testes. Apenas o número autorizado pela Meta poderá participar neste momento. A criação automática de contas individuais ainda está em desenvolvimento.</p></div>
+<div class="card"><h2>O que acontece depois?</h2><div class="intro-step"><span class="number">01</span><span>Você abre uma conversa com o número oficial do Legado Digital.</span></div><div class="intro-step"><span class="number">02</span><span>Escolhe a entrevista Básica ou conhece o plano Completo.</span></div><div class="intro-step"><span class="number">03</span><span>Constrói seu perfil com memórias autorizadas e controle sobre o compartilhamento.</span></div><p class="fineprint">Básico R$ 1,90 (único) · Completo R$ 19,90/mês. Pagamentos ainda não habilitados nesta tela.</p></div>
+<p class="privacy-foot">A IA é identificada como representação digital, nunca como a pessoa real. <a class="privacy-link" href="./privacidade.html">Privacidade</a> · <a class="privacy-link" href="./exclusao-de-dados.html">Exclusão de dados</a></p>
+</main><script>
+const input=document.getElementById("phone"),consent=document.getElementById("consent"),status=document.getElementById("status");
+document.getElementById("start").addEventListener("click",()=>{
+ const phone=input.value.replace(/\D/g,"");
+ if(!/^55\d{10,11}$/.test(phone)){status.textContent="Informe um número brasileiro válido com +55 e DDD.";return}
+ if(!consent.checked){status.textContent="Autorize o contato pelo WhatsApp para continuar.";return}
+ // Somente o número autorizado na conta de teste Meta. Não cria cadastro nem usa o telefone digitado para autenticação.
+ if(phone!=="5531992332089"){status.textContent="Estamos em testes. Novos números serão liberados quando a linha comercial estiver pronta.";return}
+ const to="15556683464",message=encodeURIComponent("COMEÇAR LEGADO DIGITAL");
+ status.textContent="Abrindo o WhatsApp. Envie a mensagem para iniciar o teste. Seu perfil individual ainda não será criado automaticamente.";
+ window.location.href="https://wa.me/"+to+"?text="+message;
+});
 </script></body></html>
