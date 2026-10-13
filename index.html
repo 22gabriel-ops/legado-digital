@@ -9,40 +9,39 @@ if (["legadodigitalapp.com.br", "www.legadodigitalapp.com.br"].includes(location
   location.replace("/site/");
 }
 </script>
-<meta name="theme-color" content="#171c36"><title>Legado Digital · Suas memórias</title>
+<meta name="theme-color" content="#171c36"><title>Legado Digital · Cadastro</title>
 <link rel="manifest" href="./manifest.webmanifest"><link rel="apple-touch-icon" href="./icon-192.png">
+
 <style>
 :root{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f7f6f2;color:#252b43}*{box-sizing:border-box}body{margin:0}main{max-width:660px;margin:auto;padding:28px 18px 80px}.brand{font-size:20px;font-weight:800;letter-spacing:.07em;margin-bottom:25px}.brand span{color:#b18b54}.hero{background:linear-gradient(125deg,#171c36,#384365);color:white;padding:28px;border-radius:25px;margin-bottom:19px}.hero h1{font-size:34px;line-height:1.1}.hero p{color:#d6d9e4;line-height:1.6}.card{background:white;border:1px solid #e9e5dc;border-radius:18px;padding:20px;margin:14px 0;box-shadow:0 3px 16px #00000007}h2{margin:0 0 14px;font-size:23px}label{font-size:13px;font-weight:700;display:block;margin:15px 0 6px}input,textarea{display:block;width:100%;border-radius:11px;padding:13px;border:1px solid #d5d5da;background:white;font:inherit;color:inherit}textarea{min-height:135px;resize:vertical}button{font:inherit;cursor:pointer;padding:12px 16px;border:0;border-radius:11px;background:#171c36;color:white;font-weight:650;min-height:44px}button.secondary{background:#ede7db;color:#282d42}button.danger{background:#ffeded;color:#922d3e}button:disabled{opacity:.55;cursor:wait}button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid #dbb878;outline-offset:2px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:17px}.muted{color:#72798a;font-size:13px;line-height:1.55}.notice{background:#fff3dc;padding:13px;border-radius:12px;font-size:13px;line-height:1.6}.hidden{display:none!important}.memory{border-top:1px solid #eee;padding:17px 0}.memory:first-child{border-top:0}.memory p{white-space:pre-wrap;line-height:1.6;overflow-wrap:anywhere}.memory h3{overflow-wrap:anywhere}#status{min-height:25px;font-size:14px;line-height:1.5}#status.error{color:#9c2b40}#status.ok{color:#176741}.headerrow{display:flex;justify-content:space-between;align-items:center;gap:12px}.headerrow small{overflow-wrap:anywhere}.tag{color:#b18b54;font-size:12px;font-weight:800;letter-spacing:.08em}.empty{text-align:center;padding:22px;color:#777}.inline{background:none;color:#29375c;text-decoration:underline;padding:5px;min-height:auto}.spaced{margin-top:18px}
-</style></head><body><main>
+</style>
+</head><body><main>
 <div class="brand">♡ LEGADO <span>DIGITAL</span></div>
-<div class="hero"><div class="tag">VERSÃO 1.0 · TESTE</div><h1>Memórias que continuam.</h1><p>Um espaço pessoal para escrever e reencontrar suas histórias. Nesta versão, só o titular da conta pode acessá-las.</p></div>
-<p class="notice">Versão de testes: armazenamento na nuvem, sem criptografia de ponta a ponta. Não registre senhas, dados financeiros ou memórias sensíveis até concluirmos a revisão de segurança e os backups.</p>
+<div class="hero"><div class="tag">VERSÃO 1.0 · TESTE</div><h1>Seu legado começa aqui.</h1><p>Crie sua conta. Depois, as perguntas e as conversas sobre sua história acontecerão pelo WhatsApp do Legado Digital.</p></div>
+<p class="notice">O início automático da conversa ainda está sendo configurado. O cadastro não garante recebimento imediato de uma mensagem. Nunca envie senhas ou dados sensíveis pelo WhatsApp.</p>
 <div id="status" role="status" aria-live="polite"></div>
 <section id="auth" class="card"><h2 id="auth-title">Entrar</h2>
 <label for="email">E-mail</label><input id="email" type="email" autocomplete="email" required>
 <label for="password">Senha</label><input id="password" type="password" autocomplete="current-password" minlength="8" required>
+<div id="signup-whatsapp" class="hidden">
+<label for="phone">WhatsApp com DDI e DDD</label><input id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+55 31 99999-9999">
+<label><input id="whatsapp-consent" type="checkbox" style="display:inline;width:auto;margin-right:8px">Autorizo o Legado Digital a me enviar mensagens pelo WhatsApp para iniciar a entrevista, responder às minhas mensagens e informar sobre os planos. Posso pedir para parar quando quiser.</label>
+<p class="muted">A conversa será iniciada depois que a integração de cadastro com o WhatsApp estiver ativa. A confirmação do e-mail pode ser necessária.</p></div>
 <div class="actions"><button id="auth-submit">Entrar</button><button id="auth-switch" class="secondary">Criar conta</button><button id="forgot" class="inline">Esqueci a senha</button></div>
-<p class="muted">Ao se cadastrar, confirme seu e-mail pela mensagem enviada pelo Supabase. A confirmação e a recuperação dependem da configuração de envio de e-mails.</p></section>
-<section id="reset" class="card hidden"><h2>Definir nova senha</h2><p class="muted">Escolha uma nova senha para sua conta. Esta página foi aberta pelo link de recuperação enviado por e-mail.</p><label for="new-password">Nova senha</label><input id="new-password" type="password" autocomplete="new-password" minlength="8"><label for="confirm-password">Confirmar nova senha</label><input id="confirm-password" type="password" autocomplete="new-password" minlength="8"><div class="actions"><button id="update-password">Salvar nova senha</button></div></section>
+<p class="muted">Ao se cadastrar, confirme seu e-mail. Nenhum pagamento será cobrado nesta versão de testes.</p></section>
+<section id="reset" class="card hidden"><h2>Definir nova senha</h2><p class="muted">Escolha uma nova senha para sua conta.</p><label for="new-password">Nova senha</label><input id="new-password" type="password" autocomplete="new-password" minlength="8"><label for="confirm-password">Confirmar nova senha</label><input id="confirm-password" type="password" autocomplete="new-password" minlength="8"><div class="actions"><button id="update-password">Salvar nova senha</button></div></section>
 <section id="account" class="hidden">
-<div class="card"><div class="headerrow"><div><h2>Minhas memórias</h2><small id="who" class="muted"></small></div><button class="secondary" id="logout">Sair</button></div>
-<p class="muted">As memórias desta conta são sincronizadas com o Supabase. Somente o titular autenticado tem acesso nesta versão.</p></div>
-<div class="card"><h2>Comece seu legado: entrevista</h2><p class="muted">Plano Básico · Responda às perguntas no seu ritmo. Cada resposta será salva como uma memória da sua conta. Não inclua dados sensíveis.</p><div id="interview-progress" class="muted">Pergunta 1 de 6</div><h3 id="interview-question">Qual lembrança da sua infância você mais gostaria de preservar?</h3><label for="interview-answer">Sua resposta</label><textarea id="interview-answer" maxlength="3000" placeholder="Conte com suas palavras..."></textarea><div class="actions"><button id="interview-save">Salvar resposta e avançar</button><button id="interview-next" class="secondary">Pular pergunta</button></div><p id="interview-feedback" class="muted" role="status"></p></div>
-<div class="card"><h2 id="editor-title">Nova memória</h2><label for="title">Título</label><input id="title" maxlength="90">
-<label for="content">Sua história</label><textarea id="content" maxlength="3000"></textarea><div class="actions"><button id="save">Salvar memória</button><button id="cancel-edit" class="secondary hidden">Cancelar edição</button></div></div>
-<div class="card"><div class="headerrow"><h2>Meu acervo</h2><button id="export" class="secondary">Exportar JSON</button></div><div id="memories" class="empty">Carregando…</div></div>
-<div class="card"><h2>Legado Completo · US$ 19,90/mês</h2><p>Seu histórico completo do ChatGPT pode enriquecer seu legado. O plano inclui importação assistida e conversas em texto com política de uso justo.</p><p class="notice">O pagamento e a liberação do plano Completo ainda estão em implantação. Nenhuma assinatura será cobrada nesta versão.</p><div class="actions"><button id="upgrade-interest" class="secondary">Quero conhecer o Completo</button></div><div id="premium-import" class="hidden"><h3>Importação do ChatGPT (em implantação)</h3><p class="muted">Cole somente mensagens suas que deseja transformar em um perfil de memórias. O texto será enviado à OpenAI para síntese; a função não armazena o texto bruto da importação. Revise e remova senhas, dados financeiros e informações de terceiros antes de continuar. Máximo: 35.000 caracteres por envio.</p><label for="chatgpt-import">Trecho autorizado do seu histórico</label><textarea id="chatgpt-import" maxlength="35000" placeholder="Cole aqui um trecho das suas mensagens no ChatGPT..."></textarea><p class="muted"><span id="chatgpt-count">0</span> / 35.000 caracteres</p><label><input id="chatgpt-consent" type="checkbox" style="display:inline;width:auto;margin-right:8px">Confirmo que revisei o texto e autorizo seu processamento para criar meu perfil de legado.</label><div class="actions"><button id="chatgpt-submit">Importar para meu perfil</button></div><p id="chatgpt-result" class="muted" role="status" aria-live="polite"></p></div>
-</div>
-<div class="card"><h2>Minha conta</h2><p class="muted">Você pode solicitar a exclusão definitiva da conta e das suas memórias. Esta ação não pode ser desfeita.</p><button id="delete-account" class="danger">Excluir minha conta e memórias</button><p class="muted">Para excluir a conta, confirme sua senha. O banco removerá sua conta de autenticação e as memórias associadas. Esta operação não pode ser desfeita. Backups e registros operacionais podem seguir os prazos de retenção aplicáveis.</p></div>
-</section><p class="muted spaced">Guardiões, permissões para terceiros, mensagens póstumas e IA ainda não estão disponíveis.</p>
-</main>
+<div class="card"><div class="headerrow"><div><h2>Conta criada</h2><small id="who" class="muted"></small></div><button class="secondary" id="logout">Sair</button></div>
+<p>Sua jornada será feita pelo WhatsApp. A entrevista e as opções de plano aparecerão na conversa quando o envio automático estiver ativado.</p><p class="muted">Nenhum envio é iniciado por esta tela atualmente.</p></div>
+<div class="card"><h2>Minha conta</h2><p class="muted">Você pode excluir sua conta e as memórias associadas, se existirem.</p><button id="delete-account" class="danger">Excluir minha conta e memórias</button><p class="muted">A exclusão exige confirmação de senha. Cópias de segurança e registros operacionais podem seguir os prazos de retenção aplicáveis.</p></div>
+</section></main>
 <script>
 'use strict';
 const BASE='https://rwzksewulqpzsdbuirrq.supabase.co';
 const KEY='sb_publishable_fxQIHucd5a62h64oCEZoIg_qcoMg3cZ';
 const STORE='legado-auth-session';
 const $=id=>document.getElementById(id);
-let session=null,memories=[],editing=null,signup=false;
+let session=null,signup=false;
 const setStatus=(message,error=false)=>{const el=$('status');el.textContent=message;el.className=error?'error':'ok'};
 function readSession(){try{return JSON.parse(localStorage.getItem(STORE)||'null')}catch{return null}}
 function keepSession(s){session=s;try{if(s)localStorage.setItem(STORE,JSON.stringify(s));else localStorage.removeItem(STORE)}catch{}}
@@ -65,78 +64,17 @@ async function authorized(endpoint,options={}){
  try{return await api(endpoint,{...options,token:session.access_token})}
  catch(e){if(/jwt expired|invalid jwt|token has expired/i.test(e.message)){await refreshSession();return api(endpoint,{...options,token:session.access_token})}throw e}
 }
-function clearEditor(){editing=null;$('title').value='';$('content').value='';$('editor-title').textContent='Nova memória';$('cancel-edit').classList.add('hidden')}
-function setLoggedIn(s){keepSession(s);const logged=!!s?.access_token;$('auth').classList.toggle('hidden',logged);$('account').classList.toggle('hidden',!logged);$('who').textContent=s?.user?.email||'';clearEditor();if(logged)loadMemories();else{memories=[];$('memories').replaceChildren()}}
-async function loadMemories(){
- try{const data=await authorized('/rest/v1/memories?select=id,title,content,created_at&order=created_at.desc');
- memories=Array.isArray(data)?data:[];renderMemories();setStatus('')}
- catch(e){setStatus('Não foi possível carregar memórias: '+e.message,true)}
-}
-function renderMemories(){
- const container=$('memories');container.replaceChildren();container.className='';
- if(!memories.length){container.className='empty';container.textContent='Nenhuma memória cadastrada ainda.';return}
- for(const m of memories){
- const block=document.createElement('div');block.className='memory';const title=document.createElement('h3');title.textContent=m.title;
- const date=document.createElement('small');date.className='muted';date.textContent=new Date(m.created_at).toLocaleDateString('pt-BR');
- const content=document.createElement('p');content.textContent=m.content;
- const buttons=document.createElement('div');buttons.className='actions';
- const edit=document.createElement('button');edit.className='secondary';edit.textContent='Editar';edit.onclick=()=>{editing=m.id;$('title').value=m.title;$('content').value=m.content;$('editor-title').textContent='Editar memória';$('cancel-edit').classList.remove('hidden');$('title').scrollIntoView({behavior:'smooth'})};
- const del=document.createElement('button');del.className='danger';del.textContent='Excluir';del.onclick=async()=>{if(!confirm('Excluir esta memória definitivamente?'))return;try{await authorized('/rest/v1/memories?id=eq.'+encodeURIComponent(m.id),{method:'DELETE'});await loadMemories();setStatus('Memória excluída.')}catch(e){setStatus(e.message,true)}};
- buttons.append(edit,del);block.append(title,date,content,buttons);container.append(block)
- }
-}
-function busy(id,val){$(id).disabled=val}
-$('auth-switch').onclick=()=>{signup=!signup;$('auth-title').textContent=signup?'Criar conta':'Entrar';$('auth-submit').textContent=signup?'Cadastrar':'Entrar';$('auth-switch').textContent=signup?'Já tenho conta':'Criar conta';setStatus('')};
+
+function setLoggedIn(s){keepSession(s);const logged=!!s?.access_token;$('auth').classList.toggle('hidden',logged);$('account').classList.toggle('hidden',!logged);$('who').textContent=s?.user?.email||'';}
+$('auth-switch').onclick=()=>{signup=!signup;$('auth-title').textContent=signup?'Criar conta':'Entrar';$('auth-submit').textContent=signup?'Cadastrar':'Entrar';$('auth-switch').textContent=signup?'Já tenho conta':'Criar conta';$('signup-whatsapp').classList.toggle('hidden',!signup);setStatus('')};
 $('auth-submit').onclick=async()=>{const email=$('email').value.trim(),password=$('password').value;if(!email||!password){setStatus('Informe e-mail e senha.',true);return}if(password.length<8){setStatus('Use uma senha com ao menos 8 caracteres.',true);return}busy('auth-submit',true);
-try{if(signup){await api('/auth/v1/signup',{method:'POST',body:{email,password}});setStatus('Cadastro solicitado. Confira seu e-mail e confirme o endereço antes de entrar.');signup=false;$('auth-title').textContent='Entrar';$('auth-submit').textContent='Entrar';$('auth-switch').textContent='Criar conta'}
+try{if(signup){const phone=$('phone').value.replace(/\D/g,'');if(!/^\d{10,15}$/.test(phone)){setStatus('Informe um número de WhatsApp válido com DDI e DDD.',true);return}if(!$('whatsapp-consent').checked){setStatus('Confirme que deseja receber mensagens do Legado Digital pelo WhatsApp.',true);return}await api('/auth/v1/signup',{method:'POST',body:{email,password,data:{whatsapp_phone:phone,whatsapp_opt_in:true}}});setStatus('Cadastro solicitado. Confirme seu e-mail. O envio automático pelo WhatsApp ainda está em implantação.');signup=false;$('auth-title').textContent='Entrar';$('auth-submit').textContent='Entrar';$('auth-switch').textContent='Criar conta'}
 else{const s=await api('/auth/v1/token?grant_type=password',{method:'POST',body:{email,password}});setLoggedIn(s);setStatus('Login realizado.')}
 }catch(e){setStatus('Não foi possível autenticar: '+e.message,true)}finally{busy('auth-submit',false)}};
 $('forgot').onclick=async()=>{const email=$('email').value.trim();if(!email){setStatus('Digite seu e-mail antes de recuperar a senha.',true);return}try{await api('/auth/v1/recover',{method:'POST',body:{email},headers:{},redirectTo:undefined});setStatus('Se o endereço estiver cadastrado, você receberá um e-mail de recuperação. Abra o link no mesmo navegador.')}catch(e){setStatus(e.message,true)}};
 $('update-password').onclick=async()=>{const password=$('new-password').value,confirmPassword=$('confirm-password').value;if(password.length<8){setStatus('A senha deve ter pelo menos 8 caracteres.',true);return}if(password!==confirmPassword){setStatus('As senhas não coincidem.',true);return}busy('update-password',true);try{await authorized('/auth/v1/user',{method:'PUT',body:{password}});$('new-password').value='';$('confirm-password').value='';$('reset').classList.add('hidden');setLoggedIn(null);setStatus('Senha alterada. Entre novamente com sua nova senha.')}catch(e){setStatus('Não foi possível alterar a senha: '+e.message,true)}finally{busy('update-password',false)}};
 $('logout').onclick=async()=>{try{await authorized('/auth/v1/logout',{method:'POST'})}catch{}setLoggedIn(null);setStatus('Sessão encerrada.')};
-$('cancel-edit').onclick=clearEditor;
-$('save').onclick=async()=>{const title=$('title').value.trim(),content=$('content').value.trim();if(!title||!content){setStatus('Preencha título e conteúdo.',true);return}busy('save',true);
-try{if(editing){await authorized('/rest/v1/memories?id=eq.'+encodeURIComponent(editing),{method:'PATCH',body:{title,content,updated_at:new Date().toISOString()}})}
-else{const user=session.user?.id;if(!user)throw Error('Não encontramos seu usuário. Entre novamente.');await authorized('/rest/v1/memories',{method:'POST',body:{user_id:user,title,content},headers:{Prefer:'return=minimal'}})}
-clearEditor();await loadMemories();setStatus('Memória salva.')}catch(e){setStatus('Erro ao salvar: '+e.message,true)}finally{busy('save',false)}};
-$('export').onclick=()=>{const json=JSON.stringify({exported_at:new Date().toISOString(),memories},null,2);const obj=URL.createObjectURL(new Blob([json],{type:'application/json'}));const a=document.createElement('a');a.href=obj;a.download='legado-memorias.json';a.click();setTimeout(()=>URL.revokeObjectURL(obj),1000)};
-const INTERVIEW_QUESTIONS=[
-'Qual lembrança da sua infância você mais gostaria de preservar?',
-'Quais pessoas marcaram sua vida e por quê? Evite dados pessoais delas.',
-'Qual conquista da sua vida mais representa quem você é?',
-'Que valores ou princípios você gostaria de transmitir?',
-'Que história engraçada ou especial seus familiares deveriam conhecer?',
-'Que conselho você gostaria de deixar para quem ama?'
-];
-let interviewStep=0;
-function renderInterview(){ $('interview-question').textContent=INTERVIEW_QUESTIONS[interviewStep];$('interview-progress').textContent='Pergunta '+(interviewStep+1)+' de '+INTERVIEW_QUESTIONS.length;}
-$('interview-next').onclick=()=>{interviewStep=(interviewStep+1)%INTERVIEW_QUESTIONS.length;$('interview-answer').value='';$('interview-feedback').textContent='';renderInterview()};
-$('interview-save').onclick=async()=>{
- const answer=$('interview-answer').value.trim();
- if(!answer){$('interview-feedback').textContent='Escreva uma resposta ou pule a pergunta.';return}
- const user=session?.user?.id;if(!user){setStatus('Entre na sua conta antes de responder.',true);return}
- busy('interview-save',true);
- try{await authorized('/rest/v1/memories',{method:'POST',body:{user_id:user,title:'Entrevista: '+INTERVIEW_QUESTIONS[interviewStep].slice(0,68),content:answer},headers:{Prefer:'return=minimal'}});
- await loadMemories();interviewStep=(interviewStep+1)%INTERVIEW_QUESTIONS.length;$('interview-answer').value='';renderInterview();$('interview-feedback').textContent='Resposta salva no seu acervo. Continue quando quiser.';}
- catch(e){setStatus('Não foi possível salvar: '+e.message,true)}finally{busy('interview-save',false)}
-};
-$('upgrade-interest').onclick=()=>{setStatus('Plano Completo em preparação: US$ 19,90/mês. O pagamento e o upload ainda não estão disponíveis.');};
-$('chatgpt-submit').disabled=true;
-$('chatgpt-submit').title='Disponível após ativação segura do plano Completo';
-renderInterview();
-$('chatgpt-import').addEventListener('input',()=>{$('chatgpt-count').textContent=String($('chatgpt-import').value.length)});
-$('chatgpt-submit').onclick=async()=>{
- const material=$('chatgpt-import').value.trim();
- if(material.length<10||material.length>35000){setStatus('Cole entre 10 e 35.000 caracteres.',true);return}
- if(!$('chatgpt-consent').checked){setStatus('Revise o texto e confirme a autorização antes de importar.',true);return}
- busy('chatgpt-submit',true);$('chatgpt-result').textContent='Processando o trecho...';
- try{const result=await authorized('/functions/v1/import-chatgpt',{method:'POST',body:{text:material}});
- if(!result?.ok)throw Error('A importação não foi confirmada.');
- $('chatgpt-import').value='';$('chatgpt-count').textContent='0';$('chatgpt-consent').checked=false;
- $('chatgpt-result').textContent='Perfil atualizado. Trechos processados: '+result.segments_processed+'.';setStatus('Importação concluída.');
- }catch(e){$('chatgpt-result').textContent='Importação não concluída.';setStatus('Falha na importação: '+e.message,true)}
- finally{busy('chatgpt-submit',false)}
-};
+
 $('delete-account').onclick=async()=>{
  const confirmation=prompt('Para excluir sua conta e as memórias associadas, digite EXCLUIR:');
  if(confirmation!=='EXCLUIR'){setStatus('Exclusão cancelada.');return}
@@ -155,6 +93,7 @@ $('delete-account').onclick=async()=>{
  }catch(e){setStatus('Não foi possível excluir a conta: '+e.message,true)}
  finally{busy('delete-account',false)}
 };
+
 (async()=>{
  const fragment=new URLSearchParams(location.hash.slice(1));
  const isRecovery=fragment.get('type')==='recovery';
