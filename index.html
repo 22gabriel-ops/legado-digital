@@ -30,6 +30,7 @@ if (["legadodigitalapp.com.br", "www.legadodigitalapp.com.br"].includes(location
 <div class="card"><h2 id="editor-title">Nova memória</h2><label for="title">Título</label><input id="title" maxlength="90">
 <label for="content">Sua história</label><textarea id="content" maxlength="3000"></textarea><div class="actions"><button id="save">Salvar memória</button><button id="cancel-edit" class="secondary hidden">Cancelar edição</button></div></div>
 <div class="card"><div class="headerrow"><h2>Meu acervo</h2><button id="export" class="secondary">Exportar JSON</button></div><div id="memories" class="empty">Carregando…</div></div>
+<div class="card"><h2>Importar conversas do ChatGPT</h2><p class="muted">Cole somente mensagens suas que deseja transformar em um perfil de memórias. O texto será enviado à OpenAI para síntese; a função não armazena o texto bruto da importação. Revise e remova senhas, dados financeiros e informações de terceiros antes de continuar. Máximo: 35.000 caracteres por envio.</p><label for="chatgpt-import">Trecho autorizado do seu histórico</label><textarea id="chatgpt-import" maxlength="35000" placeholder="Cole aqui um trecho das suas mensagens no ChatGPT..."></textarea><p class="muted"><span id="chatgpt-count">0</span> / 35.000 caracteres</p><label><input id="chatgpt-consent" type="checkbox" style="display:inline;width:auto;margin-right:8px">Confirmo que revisei o texto e autorizo seu processamento para criar meu perfil de legado.</label><div class="actions"><button id="chatgpt-submit">Importar para meu perfil</button></div><p id="chatgpt-result" class="muted" role="status" aria-live="polite"></p></div>
 <div class="card"><h2>Minha conta</h2><p class="muted">Você pode solicitar a exclusão definitiva da conta e das suas memórias. Esta ação não pode ser desfeita.</p><button id="delete-account" class="danger">Excluir minha conta e memórias</button><p class="muted">Para excluir a conta, confirme sua senha. O banco removerá sua conta de autenticação e as memórias associadas. Esta operação não pode ser desfeita. Backups e registros operacionais podem seguir os prazos de retenção aplicáveis.</p></div>
 </section><p class="muted spaced">Guardiões, permissões para terceiros, mensagens póstumas e IA ainda não estão disponíveis.</p>
 </main>
@@ -97,6 +98,19 @@ try{if(editing){await authorized('/rest/v1/memories?id=eq.'+encodeURIComponent(e
 else{const user=session.user?.id;if(!user)throw Error('Não encontramos seu usuário. Entre novamente.');await authorized('/rest/v1/memories',{method:'POST',body:{user_id:user,title,content},headers:{Prefer:'return=minimal'}})}
 clearEditor();await loadMemories();setStatus('Memória salva.')}catch(e){setStatus('Erro ao salvar: '+e.message,true)}finally{busy('save',false)}};
 $('export').onclick=()=>{const json=JSON.stringify({exported_at:new Date().toISOString(),memories},null,2);const obj=URL.createObjectURL(new Blob([json],{type:'application/json'}));const a=document.createElement('a');a.href=obj;a.download='legado-memorias.json';a.click();setTimeout(()=>URL.revokeObjectURL(obj),1000)};
+$('chatgpt-import').addEventListener('input',()=>{$('chatgpt-count').textContent=String($('chatgpt-import').value.length)});
+$('chatgpt-submit').onclick=async()=>{
+ const material=$('chatgpt-import').value.trim();
+ if(material.length<10||material.length>35000){setStatus('Cole entre 10 e 35.000 caracteres.',true);return}
+ if(!$('chatgpt-consent').checked){setStatus('Revise o texto e confirme a autorização antes de importar.',true);return}
+ busy('chatgpt-submit',true);$('chatgpt-result').textContent='Processando o trecho...';
+ try{const result=await authorized('/functions/v1/import-chatgpt',{method:'POST',body:{text:material}});
+ if(!result?.ok)throw Error('A importação não foi confirmada.');
+ $('chatgpt-import').value='';$('chatgpt-count').textContent='0';$('chatgpt-consent').checked=false;
+ $('chatgpt-result').textContent='Perfil atualizado. Trechos processados: '+result.segments_processed+'.';setStatus('Importação concluída.');
+ }catch(e){$('chatgpt-result').textContent='Importação não concluída.';setStatus('Falha na importação: '+e.message,true)}
+ finally{busy('chatgpt-submit',false)}
+};
 $('delete-account').onclick=async()=>{
  const confirmation=prompt('Para excluir sua conta e as memórias associadas, digite EXCLUIR:');
  if(confirmation!=='EXCLUIR'){setStatus('Exclusão cancelada.');return}
