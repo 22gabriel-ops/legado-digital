@@ -101,7 +101,7 @@ select{width:100%;display:block;min-height:50px;padding:12px 14px;border:1px sol
 <section id="account" class="hidden">
 <div class="card"><div class="headerrow"><div><h2>Conta criada</h2><small id="who" class="muted"></small></div><button class="secondary" id="logout">Sair</button></div>
 <p>Cadastre seu número de WhatsApp para receber as mensagens do Legado Digital. Você poderá alterá-lo quando precisar.</p>
-<label for="account-country">País do WhatsApp</label><select id="account-country">
+<div id="phone-editor"><label for="account-country">País do WhatsApp</label><select id="account-country">
 <option value="55" selected>🇧🇷 Brasil (+55)</option>
 <option value="1">🇺🇸 Estados Unidos / Canadá (+1)</option>
 <option value="351">🇵🇹 Portugal (+351)</option>
@@ -157,8 +157,8 @@ select{width:100%;display:block;min-height:50px;padding:12px 14px;border:1px sol
 </select>
 <label for="account-phone">Número com DDD / código de área</label><input id="account-phone" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="31 99999-9999">
 <label class="checkboxlabel"><input id="account-consent" type="checkbox">Autorizo o Legado Digital a entrar em contato pelo WhatsApp para apresentar o serviço e iniciar a entrevista. Posso pedir para parar quando desejar.</label>
-<div class="actions"><button id="save-phone">Salvar número</button></div>
-<div id="saved-phone-panel" class="hidden"><p class="muted" id="saved-phone-label"></p><div class="actions"><button id="welcome-test" class="secondary">Enviar mensagem de teste</button></div><p class="muted">Disponível somente para o titular e número autorizados na Meta durante os testes.</p></div></div>
+<div class="actions"><button id="save-phone">Salvar número</button><button id="cancel-phone-edit" class="secondary hidden">Cancelar alteração</button></div></div>
+<div id="saved-phone-panel" class="hidden"><p class="muted" id="saved-phone-label"></p><button id="edit-phone" class="inline">Alterar número</button><div class="actions"><button id="welcome-test" class="secondary">Enviar mensagem de teste</button></div><p class="muted">Disponível somente para o titular e número autorizados na Meta durante os testes.</p></div></div>
 <div class="card"><h2>Minha conta</h2><p class="muted">Você pode excluir sua conta e as memórias associadas, se existirem.</p><button id="delete-account" class="danger">Excluir minha conta e memórias</button><p class="muted">A exclusão exige confirmação de senha. Cópias de segurança e registros operacionais podem seguir os prazos de retenção aplicáveis.</p></div>
 </section></main>
 <script>
@@ -207,6 +207,8 @@ function displaySavedPhone(user){
  if(code){select.value=code;$('account-phone').value=saved.slice(code.length)}else{$('account-phone').value=saved}
  $('account-consent').checked=agreed;
  $('saved-phone-panel').classList.toggle('hidden',!saved||!agreed);
+ $('phone-editor').classList.toggle('hidden',!!saved&&agreed);
+ $('cancel-phone-edit').classList.toggle('hidden',!saved||!agreed);
  $('saved-phone-label').textContent=saved&&agreed?'WhatsApp salvo: +'+saved:'';
 }
 function setLoggedIn(s){
@@ -215,6 +217,8 @@ function setLoggedIn(s){
  $('who').textContent=s?.user?.email||'';
  if(logged)displaySavedPhone(s.user);
 }
+$('edit-phone').onclick=()=>{$('phone-editor').classList.remove('hidden');$('saved-phone-panel').classList.add('hidden');setStatus('Confira e salve o novo número para continuar.')};
+$('cancel-phone-edit').onclick=()=>{displaySavedPhone(session?.user);setStatus('Alteração cancelada.')};
 $('save-phone').onclick=async()=>{
  let phone;try{phone=countryPhone()}catch(e){setStatus(e.message,true);return}
  if(!$('account-consent').checked){setStatus('Autorize o contato antes de salvar o número.',true);return}
@@ -227,10 +231,7 @@ $('save-phone').onclick=async()=>{
 };
 $('welcome-test').onclick=async()=>{
  if($('saved-phone-panel').classList.contains('hidden')){setStatus('Salve seu WhatsApp antes do teste.',true);return}
- const saved=String(session?.user?.user_metadata?.whatsapp_phone||'');
- let entered;try{entered=countryPhone()}catch(e){setStatus(e.message,true);return}
- if(saved!==entered){setStatus('Você alterou o número. Clique em Salvar número antes de testar.',true);return}
- busy('welcome-test',true);
+  busy('welcome-test',true);
  try{const r=await authorized('/functions/v1/whatsapp-onboard',{method:'POST',body:{}});setStatus(r.message||'Solicitação enviada à Meta.')}
  catch(e){setStatus('Teste não enviado: '+e.message,true)}finally{busy('welcome-test',false)}
 };
