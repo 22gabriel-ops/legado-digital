@@ -86,8 +86,8 @@ async function authorized(endpoint,options={}){
 
 function busy(id,val){$(id).disabled=val}
 $('welcome-test').onclick=async()=>{
- const phone=$('account-phone').value.replace(/\\D/g,'');
- if(!/^\\d{10,15}$/.test(phone)){setStatus('Informe um número com DDI e DDD.',true);return}
+ const phone=$('account-phone').value.replace(/\D/g,'');
+ if(!/^\d{10,15}$/.test(phone)){setStatus('Informe um número com DDI e DDD.',true);return}
  if(!$('account-consent').checked){setStatus('Autorize o contato por WhatsApp antes do teste.',true);return}
  busy('welcome-test',true);
  try{
