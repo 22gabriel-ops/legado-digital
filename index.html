@@ -161,8 +161,10 @@ select{width:100%;display:block;min-height:50px;padding:12px 14px;border:1px sol
 <label class="checkboxlabel"><input id="account-consent" type="checkbox">Autorizo o Legado Digital a entrar em contato pelo WhatsApp para apresentar o serviço e iniciar a entrevista. Posso pedir para parar quando desejar.</label>
 <div class="actions"><button id="save-phone">Salvar número</button><button id="cancel-phone-edit" class="secondary hidden">Cancelar alteração</button></div></div>
 <div id="saved-phone-panel" class="hidden"><p class="muted" id="saved-phone-label"></p><button id="edit-phone" class="inline">Alterar número</button><div class="actions"><button id="welcome-test" class="secondary">Enviar mensagem de teste</button></div><p class="muted">Disponível somente para o titular e número autorizados na Meta durante os testes.</p></div></div>
-<div class="card"><h2>Meu Legado no WhatsApp 🌳</h2><p>É no WhatsApp que sua história ganha vida. Converse normalmente, sem comandos: o Legado vai conhecer você aos poucos e construir sua primeira versão. Importações e guardiões ficam aqui no aplicativo.</p><div class="actions"><a class="button" style="display:inline-block;background:#ab8650;color:white;text-decoration:none;padding:12px 16px;border-radius:10px;font-weight:700" href="https://wa.me/5531983116972?text=Ol%C3%A1%2C%20Legado%20Digital%21" target="_blank" rel="noopener noreferrer">Conversar no WhatsApp ↗</a></div><p class="muted">O acesso a memórias pessoais pelo WhatsApp depende de confirmação do número e das permissões de cada Legado.</p></div>
-<div class="card"><h2>Importar minhas histórias</h2><p>Plano Completo: escolha conversas exportadas do WhatsApp ou seu histórico do ChatGPT, com revisão e proteção de dados de terceiros.</p><p><a href="./importar-legado.html">Gerenciar importações →</a></p></div>
+<div class="card"><h2>Meu Legado no WhatsApp 🌳</h2><p>Seu Legado nasce nas conversas naturais com você. A IA vai aprendendo seu jeito de falar, sem formulários nem comandos.</p><div class="actions"><a style="display:inline-block;background:#ab8650;color:white;text-decoration:none;padding:12px 16px;border-radius:10px;font-weight:700" href="https://wa.me/5531983116972?text=Ol%C3%A1%2C%20Legado%20Digital%21" target="_blank" rel="noopener noreferrer">Conversar com meu Legado ↗</a></div><p class="muted">No Essencial e no Completo, apenas o titular verificado interage com seu Legado.</p></div>
+<div class="card"><h2>Meu plano</h2><p><strong id="legacy-plan-label">Essencial — Grátis</strong></p><p class="muted" id="legacy-plan-desc">Conversa natural pelo WhatsApp central. Importações e número exclusivo exigem plano ativo.</p><p><a href="./site/">Ver os três planos e condições →</a></p></div>
+<div class="card"><h2>Importar minhas histórias</h2><p>No Completo (R$ 19,90/mês) ou Compartilhado (R$ 99,90/mês), importe arquivos exportados do WhatsApp e ChatGPT com revisão e proteção de terceiros.</p><p><a href="./importar-legado.html">Gerenciar importações →</a></p></div>
+<div class="card"><h2>Meu número exclusivo</h2><p>No Compartilhado, o seu Legado pode ter um número próprio para conversar com familiares e amigos autorizados. Recurso em implantação e sujeito a disponibilidade.</p></div>
 <div class="card"><h2>Guardiões do meu legado</h2><p class="muted">Indique um guardião principal e um substituto. As indicações são privadas e não concedem acesso às suas memórias.</p><div class="actions"><button id="open-guardians" type="button">Cadastrar guardiões</button></div></div>
 <div class="card"><h2>Minha conta</h2><p class="muted">Você pode excluir sua conta e as memórias associadas, se existirem.</p><button id="delete-account" class="danger">Excluir minha conta e memórias</button><p class="muted">A exclusão exige confirmação de senha. Cópias de segurança e registros operacionais podem seguir os prazos de retenção aplicáveis.</p></div>
 </section></main>
@@ -229,11 +231,20 @@ async function loadPhoneVerification(){
   button.disabled=!verified;
  }catch(e){label.textContent='Não foi possível consultar a verificação. Integração com WhatsApp temporariamente indisponível.';button.disabled=true;}
 }
+async function loadLegacyPlan(){
+ try{
+  const rows=await authorized('/rest/v1/legacy_user_entitlements?select=plan,active_until&limit=1');
+  const p=rows?.[0], active=!!p?.active_until&&Date.parse(p.active_until)>Date.now();
+  const tier=active&&['complete','shared'].includes(p.plan)?p.plan:'essential';
+  $('legacy-plan-label').textContent=tier==='shared'?'Compartilhado — R$ 99,90/mês':tier==='complete'?'Completo — R$ 19,90/mês':'Essencial — Grátis';
+  $('legacy-plan-desc').textContent=tier==='shared'?'Importações e conversas autorizadas pelo número exclusivo, quando provisionado.':tier==='complete'?'Importações permitidas enquanto a assinatura estiver ativa.':'Sua conversa natural continua disponível. Importações não influenciam a IA sem assinatura ativa.';
+ }catch{$('legacy-plan-desc').textContent='Não foi possível consultar seu plano agora.'}
+}
 function setLoggedIn(s){
  keepSession(s);const logged=!!s?.access_token;
  $('auth').classList.toggle('hidden',logged);$('account').classList.toggle('hidden',!logged);
  $('who').textContent=s?.user?.email||'';
- if(logged){displaySavedPhone(s.user);void loadPhoneVerification();}
+ if(logged){displaySavedPhone(s.user);void loadPhoneVerification();void loadLegacyPlan();}
 }
 $('open-import').onclick=()=>{location.href='./importar-whatsapp.html'};
 $('open-guardians').onclick=()=>{location.href='./guardioes.html'};
