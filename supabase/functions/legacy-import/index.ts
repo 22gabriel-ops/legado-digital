@@ -14,7 +14,7 @@ Deno.serve(async req=>{
   const {data:{user},error}=await auth.auth.getUser(token);if(error||!user?.email_confirmed_at)return respond({error:"Sessão inválida"},401);
   const admin=createClient(url,svc,{auth:{persistSession:false}});
   const {data:plan}=await admin.from("legacy_user_entitlements").select("plan,active_until").eq("owner_id",user.id).maybeSingle();
-  if(plan?.plan!=="complete"||!plan.active_until||Date.parse(plan.active_until)<Date.now())return respond({error:"Importação disponível somente com assinatura Legado Completo ativa"},403);
+  if(!["complete","shared"].includes(String(plan?.plan||""))||!plan?.active_until||Date.parse(plan.active_until)<Date.now())return respond({error:"Importação disponível somente com assinatura Completo ou Compartilhado ativa"},403);
   const body=await req.json();const source=body.source,filename=String(body.filename||"arquivo").slice(0,180);
   if(!["whatsapp","chatgpt"].includes(source))return respond({error:"Fonte inválida"},400);
   const items=body.items;
