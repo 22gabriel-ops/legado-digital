@@ -167,12 +167,16 @@ async function humanizedAnswer(owner: string, sender: string, input: string, con
     "Resumo preliminar: " + String(current?.summary || "").slice(0,4000),
     "Responda SOMENTE JSON com: reply (resposta), suggested_memory (fato pontual explicitamente dito pelo remetente, ou vazio), summary (breve resumo atualizado)."
   ].join("\n");
+  // A mensagem recebida ja foi gravada no historico. Evitar duplicidade e garantir que a IA leia o texto atual.
+  const priorHistory = history.at(-1)?.direction === "in" && history.at(-1)?.content === input
+    ? history.slice(0, -1) : history;
   const result = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST", headers: { Authorization: "Bearer " + env("OPENAI_API_KEY"), ...jsonHeaders },
     body: JSON.stringify({ model: env("OPENAI_MODEL") || "gpt-4.1-mini", max_completion_tokens: 650,
       response_format: { type: "json_object" },
       messages: [{ role: "system", content: prompt },
-        ...history.map(h => ({role: h.direction === "out" ? "assistant" : "user", content: h.content}))] })
+        ...priorHistory.map(h => ({role: h.direction === "out" ? "assistant" : "user", content: h.content})),
+        {role: "user", content: input}] })
   });
   if (!result.ok) throw new Error("Humanized AI " + result.status);
   const data = await result.json();
