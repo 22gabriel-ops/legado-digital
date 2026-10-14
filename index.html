@@ -247,7 +247,7 @@ function setLoggedIn(s){
  $('who').textContent=s?.user?.email||'';
  if(logged){displaySavedPhone(s.user);void loadPhoneVerification();void loadLegacyPlan();}
 }
-$('open-import').onclick=()=>{location.href='./importar-whatsapp.html'};
+// Importacoes sao acessadas pelo link da area de conta.
 $('open-guardians').onclick=()=>{location.href='./guardioes.html'};
 $('edit-phone').onclick=()=>{$('phone-editor').classList.remove('hidden');$('saved-phone-panel').classList.add('hidden');setStatus('Confira e salve o novo número para continuar.')};
 $('cancel-phone-edit').onclick=()=>{displaySavedPhone(session?.user);setStatus('Alteração cancelada.')};
