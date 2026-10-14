@@ -5,6 +5,8 @@ const respond=(data:unknown,status=200)=>new Response(JSON.stringify(data),{stat
 Deno.serve(async req=>{
  if(req.method==="OPTIONS")return new Response(null,{headers:{"Access-Control-Allow-Origin":"https://legadodigitalapp.com.br","Access-Control-Allow-Headers":"authorization, apikey, content-type","Access-Control-Allow-Methods":"POST, OPTIONS"}});
  if(req.method!=="POST")return respond({error:"Método não permitido"},405);
+ // Versao 1: importacoes bloqueadas no servidor ate liberacao deliberada da versao 2.
+ if(env("LEGACY_IMPORT_V2_ENABLED")!=="true")return respond({error:"Importações do WhatsApp e ChatGPT estarão disponíveis na versão 2 do Legado Digital."},403);
  if(req.headers.get("origin")&&req.headers.get("origin")!=="https://legadodigitalapp.com.br")return respond({error:"Origem não autorizada"},403);
  const url=env("SUPABASE_URL"),svc=env("SUPABASE_SERVICE_ROLE_KEY");
  if(!url||!svc)return respond({error:"Configuração incompleta"},503);
