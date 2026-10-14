@@ -102,6 +102,7 @@ select{width:100%;display:block;min-height:50px;padding:12px 14px;border:1px sol
 <section id="account" class="hidden">
 <div class="card"><div class="headerrow"><div><h2>Conta criada</h2><small id="who" class="muted"></small></div><button class="secondary" id="logout">Sair</button></div>
 <p>Cadastre seu número de WhatsApp para receber as mensagens do Legado Digital. Você poderá alterá-lo quando precisar.</p>
+<p id="phone-verification-status" class="muted" role="status">WhatsApp ainda não verificado. Você pode usar sua conta normalmente; a integração ficará indisponível até a confirmação do número.</p>
 <div id="phone-editor"><label for="account-country">País do WhatsApp</label><select id="account-country">
 <option value="55" selected>🇧🇷 Brasil (+55)</option>
 <option value="1">🇺🇸 Estados Unidos / Canadá (+1)</option>
@@ -214,11 +215,24 @@ function displaySavedPhone(user){
  $('cancel-phone-edit').classList.toggle('hidden',!saved||!agreed);
  $('saved-phone-label').textContent=saved&&agreed?'WhatsApp salvo: +'+saved:'';
 }
+async function loadPhoneVerification(){
+ const label=$('phone-verification-status');
+ const button=$('welcome-test');
+ button.disabled=true;
+ label.textContent='Verificando confirmação do WhatsApp...';
+ try{
+  const rows=await authorized('/rest/v1/legacy_phone_verifications?select=phone_e164,status&status=eq.verified&limit=20');
+  const phone='+'+String(session?.user?.user_metadata?.whatsapp_phone||'').replace(/\D/g,'');
+  const verified=Array.isArray(rows)&&rows.some(row=>row.phone_e164===phone&&phone.length>7);
+  label.textContent=verified?'WhatsApp verificado.':'WhatsApp ainda não verificado. A conta e suas memórias continuam disponíveis; a integração pelo WhatsApp aguarda confirmação.';
+  button.disabled=!verified;
+ }catch(e){label.textContent='Não foi possível consultar a verificação. Integração com WhatsApp temporariamente indisponível.';button.disabled=true;}
+}
 function setLoggedIn(s){
  keepSession(s);const logged=!!s?.access_token;
  $('auth').classList.toggle('hidden',logged);$('account').classList.toggle('hidden',!logged);
  $('who').textContent=s?.user?.email||'';
- if(logged)displaySavedPhone(s.user);
+ if(logged){displaySavedPhone(s.user);void loadPhoneVerification();}
 }
 $('open-import').onclick=()=>{location.href='./importar-whatsapp.html'};
 $('open-guardians').onclick=()=>{location.href='./guardioes.html'};
@@ -230,12 +244,12 @@ $('save-phone').onclick=async()=>{
  busy('save-phone',true);
  try{
   const user=await authorized('/auth/v1/user',{method:'PUT',body:{data:{whatsapp_phone:phone,whatsapp_opt_in:true}}});
-  session.user=user;keepSession(session);displaySavedPhone(user);
-  setStatus('WhatsApp salvo. Agora você pode solicitar uma mensagem de teste.');
+  session.user=user;keepSession(session);displaySavedPhone(user);void loadPhoneVerification();
+  setStatus('WhatsApp salvo. A integração será liberada após a confirmação do número.');
  }catch(e){setStatus('Não foi possível salvar: '+e.message,true)}finally{busy('save-phone',false)}
 };
 $('welcome-test').onclick=async()=>{
- if($('saved-phone-panel').classList.contains('hidden')){setStatus('Salve seu WhatsApp antes do teste.',true);return}
+ if($('saved-phone-panel').classList.contains('hidden')||$('welcome-test').disabled){setStatus('Verifique seu WhatsApp antes de enviar uma mensagem de teste.',true);return}
   busy('welcome-test',true);
  try{const r=await authorized('/functions/v1/whatsapp-onboard',{method:'POST',body:{}});setStatus(r.message||'Solicitação enviada à Meta.')}
  catch(e){setStatus('Teste não enviado: '+e.message,true)}finally{busy('welcome-test',false)}
