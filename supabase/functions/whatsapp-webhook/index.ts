@@ -209,7 +209,7 @@ async function processMessage(msg: any): Promise<void> {
   // verificacao de titularidade. Nao apaga memorias nem conversas.
   if (/^PARAR[.! ]*$/i.test(input)) {
     const phone = "+" + sender.replace(/\D/g, "");
-    if (!/^\\+[1-9]\d{6,14}$/.test(phone)) return;
+    if (!/^\+[1-9]\d{6,14}$/.test(phone)) return;
     await db("legacy_whatsapp_optouts?on_conflict=phone_e164", {
       method: "POST",
       headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
