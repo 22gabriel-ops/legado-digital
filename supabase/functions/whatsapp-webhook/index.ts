@@ -135,8 +135,8 @@ async function answerWithAI(owner: string, sender: string, conversationId: strin
 async function resolveOwner(sender: string): Promise<string | null> {
   const legacyOwner = env("LEGACY_OWNER_ID");
   if (legacyOwner && canReadAndSave(sender)) return legacyOwner;
-  const phone = "+" + sender.replace(/\\D/g, "");
-  if (!/^\\+[1-9]\\d{6,14}$/.test(phone)) return null;
+  const phone = "+" + sender.replace(/\D/g, "");
+  if (!/^\+[1-9]\d{6,14}$/.test(phone)) return null;
   const verified = await db("legacy_phone_verifications?select=owner_id&phone_e164=eq." +
     encodeURIComponent(phone) + "&status=eq.verified&limit=2");
   if (!Array.isArray(verified) || verified.length !== 1) return null;
@@ -166,7 +166,7 @@ async function humanizedAnswer(owner: string, sender: string, input: string, con
     "Fase: " + stage + "; titular: " + fullName + "; contexto confirmado: " + JSON.stringify(memories || []).slice(0,9000),
     "Resumo preliminar: " + String(current?.summary || "").slice(0,4000),
     "Responda SOMENTE JSON com: reply (resposta), suggested_memory (fato pontual explicitamente dito pelo remetente, ou vazio), summary (breve resumo atualizado)."
-  ].join("\\n");
+  ].join("\n");
   const result = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST", headers: { Authorization: "Bearer " + env("OPENAI_API_KEY"), ...jsonHeaders },
     body: JSON.stringify({ model: env("OPENAI_MODEL") || "gpt-4.1-mini", max_completion_tokens: 650,
@@ -191,7 +191,7 @@ async function humanizedAnswer(owner: string, sender: string, input: string, con
       body:JSON.stringify({owner_id:owner,source:"chat",content:suggestion,status:"pending"})});
   }
   let reply = String(parsed.reply || "Me conta um pouco mais sobre você?").slice(0,3200);
-  if (ready && stage !== "ready") reply = "Pronto! Acredito que já temos a primeira versão do seu Legado. 🌳 Vou começar a conversar com o seu jeito de falar e continuar aprendendo com suas histórias. Sou uma representação digital por IA, não a pessoa real.\\n\\n" + reply;
+  if (ready && stage !== "ready") reply = "Pronto! Acredito que já temos a primeira versão do seu Legado. 🌳 Vou começar a conversar com o seu jeito de falar e continuar aprendendo com suas histórias. Sou uma representação digital por IA, não a pessoa real.\n\n" + reply;
   return reply;
 }
 
