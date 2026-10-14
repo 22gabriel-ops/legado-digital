@@ -53,12 +53,13 @@ Deno.serve(async req=>{
   const count=(profile?.exchanges||0)+1;
   // A conclusao da primeira versao exige varias trocas; revisoes sempre permanecem explicitas.
   const ready=stage==="ready"||(count>=12&&String(parsed.summary||"").length>=180);
+  const finalReply=ready&&stage!=="ready" ? "Pronto, acredito que já temos a primeira versão do seu Legado. 🌳 A partir de agora, vou conversar no seu jeito e continuar aprendendo com você. Sou uma representação digital por IA, construída a partir da sua história — e você continua no controle do que fica guardado.\n\n"+reply : reply;
   const [{error:e1},{error:e2}]=await Promise.all([
-   admin.from("legacy_chat_turns").insert([{owner_id:user.id,role:"user",content:message},{owner_id:user.id,role:"assistant",content:reply}]),
+   admin.from("legacy_chat_turns").insert([{owner_id:user.id,role:"user",content:message},{owner_id:user.id,role:"assistant",content:finalReply}]),
    admin.from("legacy_profiles").upsert({owner_id:user.id,stage:ready?"ready":"discovering",summary:String(parsed.summary||profile?.summary||"").slice(0,4000),speaking_style:String(parsed.style_note||profile?.speaking_style||"").slice(0,1200),exchanges:count,ready_at:ready?(profile?.ready_at||new Date().toISOString()):null,updated_at:new Date().toISOString()})
   ]);if(e1||e2)throw e1||e2;
   const candidate=String(parsed.suggested_memory||"").trim();
   if(candidate.length>=8&&candidate.length<=500)await admin.from("legacy_memory_suggestions").insert({owner_id:user.id,content:candidate,source:"chat"});
-  return respond({reply,stage:ready?"ready":"discovering",exchanges:count,memorySuggested:!!candidate});
+  return respond({reply:finalReply,stage:ready?"ready":"discovering",exchanges:count,memorySuggested:!!candidate});
  }catch(err){console.error("legacy-conversation",err instanceof Error?err.message:String(err));return respond({error:"Não foi possível processar agora"},500)}
 });
