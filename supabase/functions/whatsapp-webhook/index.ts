@@ -275,9 +275,25 @@ async function processMessage(msg: any): Promise<void> {
   } else if (/^CANCELAR[.! ]*$/i.test(input)) {
     output = pending ? "Memória descartada. Nada foi salvo." : "Não há memória aguardando confirmação.";
   } else {
-    output = env("WHATSAPP_HUMANIZED_ENABLED") === "true" && (await verifiedOwnerSender(owner,sender) || canReadAndSave(sender))
-      ? await humanizedAnswer(owner, sender, input, convo.id)
-      : await answerWithAI(owner, sender, convo.id);
+    // Enable only after the SQL migration is applied and quota integration tested.
+    let usage: any = null;
+    if (env("WHATSAPP_MONTHLY_LIMITS_ENABLED") === "true") {
+      const rs = await db("rpc/legacy_reserve_interaction", {
+        method: "POST", body: JSON.stringify({ p_owner: owner, p_message_id: msg.id, p_source: "owner" })
+      });
+      usage = Array.isArray(rs) ? rs[0] : rs;
+    }
+    if (usage && usage.allowed === false) {
+      output = "🌳 Este Legado alcançou o limite de interações deste mês. As memórias continuam preservadas. Você pode aguardar o próximo ciclo ou adquirir créditos extras quando a opção estiver disponível. Nenhuma compra é automática.";
+    } else {
+      output = env("WHATSAPP_HUMANIZED_ENABLED") === "true" && (await verifiedOwnerSender(owner,sender) || canReadAndSave(sender))
+        ? await humanizedAnswer(owner, sender, input, convo.id)
+        : await answerWithAI(owner, sender, convo.id);
+      if (usage?.reason === "ok" && usage.percent_used >= 100 && usage.used_count === usage.allowance)
+        output += "\n\n🌳 Você utilizou 100% da franquia mensal. As próximas interações precisarão de créditos adicionais ou da renovação do ciclo.";
+      else if (usage?.reason === "ok" && usage.percent_used >= 80 && usage.used_count === Math.ceil(usage.allowance * 0.8))
+        output += "\n\n🌳 Aviso: você já usou 80% das interações disponíveis neste mês.";
+    }
   }
   await sendWhatsApp(sender, output);
   await db("whatsapp_messages", { method: "POST", body: JSON.stringify({ conversation_id: convo.id, direction: "out", content: output }) });
