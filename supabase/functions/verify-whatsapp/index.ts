@@ -20,7 +20,7 @@ const cors = (origin: string | null) => ({
   Vary: 'Origin',
 });
 
-const reply = (data: unknown, status = 200, origin: string | null = null) => new Response(JSON.stringify(data), { status, headers: cors(origin) });
+const jsonReply = (data: unknown, status = 200, origin: string | null = null) => new Response(JSON.stringify(data), { status, headers: cors(origin) });
 
 const bytes = new TextEncoder();
 
@@ -88,7 +88,8 @@ function generateCode() {
 
 Deno.serve(async (req) => {
   const origin = req.headers.get('origin');
-  if (origin && !allowedOrigins.has(origin)) return reply({ error: 'Origem não autorizada' }, 403, origin);
+  const reply = (data: unknown, status = 200) => jsonReply(data, status, origin);
+  if (origin && !allowedOrigins.has(origin)) return reply({ error: 'Origem não autorizada' }, 403);
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors(origin) });
 
   if (req.method !== 'POST') return reply({ error: 'Método inválido' }, 405);
