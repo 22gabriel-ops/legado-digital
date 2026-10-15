@@ -7,8 +7,9 @@
 <a href="./index.html">← Voltar à minha conta</a>
 <h1>Guardiões do legado</h1>
 <p class="muted">Escolha quem poderá cuidar do seu legado no futuro. Você pode indicar uma pessoa principal e uma substituta.</p>
-<div class="notice"><strong>Importante:</strong> este cadastro registra apenas sua indicação. Ninguém receberá convite, acesso a memórias ou poderes de administração agora. Os guardiões deverão aceitar formalmente o convite em uma etapa futura, com verificação de identidade e regras de liberação do legado.</div>
+<div class="notice"><strong>Importante:</strong> este cadastro registra apenas sua indicação. Você poderá compartilhar um link de convite com cada pessoa. Aceitar o convite não concede acesso a memórias nem poderes de administração. A liberação futura exigirá um processo separado de verificação e autorização.</div>
 <p id="feedback" role="status" aria-live="polite"></p>
+<section class="card hidden" id="invitation"><h2>Convite para ser guardião</h2><p id="invitation-description" class="muted">Entre com a conta cujo e-mail foi convidado, já confirmado, para aceitar ou recusar.</p><button id="accept-invitation" type="button">Aceitar indicação</button><button id="decline-invitation" type="button" class="secondary">Recusar indicação</button><p id="invitation-feedback" role="status"></p><p class="muted">O aceite registra apenas sua concordância. Você não receberá acesso às memórias ou conversas.</p><a href="./index.html?app=1">Entrar ou criar conta</a></section>
 <section class="card" id="gate"><p>Verificando sua sessão…</p></section>
 <section id="panel" class="hidden">
 <div class="card"><h2>Minhas indicações</h2><div id="entries"><p class="muted">Carregando…</p></div></div>
@@ -28,7 +29,7 @@ const BASE='https://rwzksewulqpzsdbuirrq.supabase.co';
 const KEY='sb_publishable_fxQIHucd5a62h64oCEZoIg_qcoMg3cZ';
 const STORE='legado-auth-session';
 const $=id=>document.getElementById(id);
-let session=null,guardians=[],editing=null;
+let session=null,guardians=[],editing=null;\nconst invitationId=new URLSearchParams(location.search).get('invite');
 function message(s,bad=false){$('feedback').textContent=s;$('feedback').className=bad?'error':'ok'}
 function saveSession(s){session=s;if(s)localStorage.setItem(STORE,JSON.stringify(s));else localStorage.removeItem(STORE)}
 async function api(path,options={}) {
@@ -56,8 +57,8 @@ function draw(){
   if(!g){item.append(el('p','Nenhuma pessoa indicada.','muted'))}
   else{
    item.append(el('p',g.full_name+' · '+g.email+(g.phone?' · '+g.phone:''),'muted'));
-   item.append(el('p',g.status==='pending'?'Indicação salva · convite ainda não enviado':'Status: '+g.status,'status'));
-   const edit=el('button','Editar','secondary');edit.type='button';edit.onclick=()=>{editing=g.id;$('role').value=g.role;$('full_name').value=g.full_name;$('email').value=g.email;$('phone').value=g.phone||'';$('form-title').textContent='Editar indicação';$('cancel').classList.remove('hidden');$('save').textContent='Salvar alterações';$('guardian-form').scrollIntoView({behavior:'smooth'})};
+   item.append(el('p',g.status==='pending'?'Aguardando aceite · compartilhe o convite':'Status: '+({accepted:'Aceitou a indicação (sem acesso)',declined:'Recusou a indicação',revoked:'Revogada'}[g.status]||g.status),'status'));\n   if(g.status==='pending'){const invite=el('button','Copiar link de convite','secondary');invite.type='button';invite.onclick=async()=>{const link=new URL('./guardioes.html?invite='+encodeURIComponent(g.id),location.href).href;try{await navigator.clipboard.writeText(link);message('Link copiado. Envie você mesmo ao e-mail ou WhatsApp do guardião indicado. Nenhum envio automático foi feito.')}catch{window.prompt('Copie o link para compartilhar:',link)}};item.append(invite)}
+   const edit=el('button','Editar','secondary');edit.type='button';edit.disabled=g.status!=='pending';edit.onclick=()=>{editing=g.id;$('role').value=g.role;$('full_name').value=g.full_name;$('email').value=g.email;$('phone').value=g.phone||'';$('form-title').textContent='Editar indicação';$('cancel').classList.remove('hidden');$('save').textContent='Salvar alterações';$('guardian-form').scrollIntoView({behavior:'smooth'})};
    const del=el('button','Remover','danger');del.type='button';del.onclick=async()=>{if(!confirm('Remover esta indicação?'))return;del.disabled=true;try{await api('/rest/v1/legacy_guardians?id=eq.'+encodeURIComponent(g.id),{method:'DELETE'});reset();await load();message('Indicação removida.')}catch(e){message(e.message,true)}finally{del.disabled=false}};
    item.append(edit,del);
   }
@@ -87,6 +88,6 @@ $('guardian-form').onsubmit=async e=>{
   session.user=user;saveSession(session);
   $('gate').classList.add('hidden');$('panel').classList.remove('hidden');
   await load();
- }catch(e){$('gate').replaceChildren(el('p',e.message+'. Volte à tela inicial e faça login.'));message('Cadastro indisponível até a autenticação e a criação da tabela no Supabase.',true)}
+ }catch(e){$('gate').classList.remove('hidden');$('gate').replaceChildren(el('p',e.message+'. Entre pelo site com o e-mail indicado no convite.'));message('Não foi possível validar a sessão.',true)}
 })();
 </script></body></html>
