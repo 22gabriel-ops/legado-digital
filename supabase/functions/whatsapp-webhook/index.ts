@@ -253,6 +253,17 @@ Deno.serve(async (req) => {
     for (const entry of event.entry || []) for (const change of entry.changes || []) {
       if (change.field !== "messages") continue;
       if (String(change.value?.metadata?.phone_number_id) !== env("WHATSAPP_PHONE_NUMBER_ID")) continue;
+      // Status callbacks are distinct from inbound messages.
+      // Never log codes, sender numbers, recipient IDs or raw webhook bodies.
+      for (const status of change.value?.statuses || []) {
+        const state = String(status?.status || "");
+        if (!["sent", "delivered", "read", "failed"].includes(state)) continue;
+        const messageId = typeof status?.id === "string" ? status.id : null;
+        const errorCodes = Array.isArray(status?.errors)
+          ? status.errors.map((e: any) => String(e?.code ?? "unknown")).slice(0, 5)
+          : [];
+        console.info("WhatsApp delivery status", { messageId, state, errorCodes });
+      }
       for (const msg of change.value?.messages || []) await processMessage(msg);
     }
     return respond("OK");
