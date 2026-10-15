@@ -1,18 +1,21 @@
 // Conversa humanizada — sempre autenticada; a IA nunca grava fatos como memoria sem revisao.
 import {createClient} from "npm:@supabase/supabase-js@2";
 const env=(k:string)=>Deno.env.get(k)||"";
-const respond=(obj:unknown,status=200)=>new Response(JSON.stringify(obj),{status,headers:{"Content-Type":"application/json","Cache-Control":"no-store","Access-Control-Allow-Origin":"https://legadodigitalapp.com.br","Access-Control-Allow-Headers":"authorization, apikey, content-type","Access-Control-Allow-Methods":"POST, OPTIONS"}});
+const allowedOrigins=new Set(["https://legadodigitalapp.com.br","https://www.legadodigitalapp.com.br","capacitor://localhost","http://localhost","https://localhost"]);
+const cors=(origin:string|null)=>({"Access-Control-Allow-Origin":allowedOrigins.has(origin||"")?origin!:"https://legadodigitalapp.com.br","Vary":"Origin","Access-Control-Allow-Headers":"authorization, apikey, content-type","Access-Control-Allow-Methods":"POST, OPTIONS"});
+const respond=(obj:unknown,status=200,origin:string|null=null)=>new Response(JSON.stringify(obj),{status,headers:{"Content-Type":"application/json","Cache-Control":"no-store",...cors(origin)}});
 Deno.serve(async req=>{
- if(req.method==="OPTIONS")return new Response(null,{headers:{"Access-Control-Allow-Origin":"https://legadodigitalapp.com.br","Access-Control-Allow-Headers":"authorization, apikey, content-type","Access-Control-Allow-Methods":"POST, OPTIONS"}});
- if(req.method!=="POST")return respond({error:"Método não permitido"},405);
- const origin=req.headers.get("origin");if(origin && origin!=="https://legadodigitalapp.com.br")return respond({error:"Origem não autorizada"},403);
+ const reply=(obj:unknown,status=200)=>respond(obj,status,req.headers.get("origin"));
+ if(req.method==="OPTIONS")return new Response(null,{headers:cors(req.headers.get("origin"))});
+ if(req.method!=="POST")return reply({error:"Método não permitido"},405);
+ const origin=req.headers.get("origin");if(origin && !allowedOrigins.has(origin))return reply({error:"Origem não autorizada"},403,origin);
  const url=env("SUPABASE_URL"),key=env("SUPABASE_SERVICE_ROLE_KEY");
- if(!url||!key||!env("OPENAI_API_KEY"))return respond({error:"Serviço não configurado"},503);
+ if(!url||!key||!env("OPENAI_API_KEY"))return reply({error:"Serviço não configurado"},503);
  try{
-  const bearer=req.headers.get("authorization")?.match(/^Bearer (.+)$/i)?.[1];if(!bearer)return respond({error:"Entre na sua conta"},401);
+  const bearer=req.headers.get("authorization")?.match(/^Bearer (.+)$/i)?.[1];if(!bearer)return reply({error:"Entre na sua conta"},401);
   const auth=createClient(url,env("SUPABASE_ANON_KEY")||env("SUPABASE_PUBLISHABLE_KEY"));
   const {data:{user},error:authError}=await auth.auth.getUser(bearer);
-  if(authError||!user||!user.email_confirmed_at)return respond({error:"Sessão ou e-mail não confirmado"},401);
+  if(authError||!user||!user.email_confirmed_at)return reply({error:"Sessão ou e-mail não confirmado"},401);
   const admin=createClient(url,key,{auth:{persistSession:false}});
   const body=await req.json();
   const action=String(body.action||"message");
@@ -22,22 +25,22 @@ Deno.serve(async req=>{
     admin.from("legacy_chat_turns").select("role,content,created_at").eq("owner_id",user.id).order("created_at",{ascending:false}).limit(40),
     admin.from("legacy_memory_suggestions").select("id,content,status,source").eq("owner_id",user.id).eq("status","pending").order("created_at",{ascending:false}).limit(30)
    ]);
-   return respond({profile,turns:(turns||[]).reverse(),suggestions:suggestions||[]});
+   return reply({profile,turns:(turns||[]).reverse(),suggestions:suggestions||[]});
   }
   if(action==="review"){
-   const id=String(body.id||"");if(!/^[0-9a-f-]{36}$/i.test(id))return respond({error:"Identificador inválido"},400);
+   const id=String(body.id||"");if(!/^[0-9a-f-]{36}$/i.test(id))return reply({error:"Identificador inválido"},400);
    const {data:item}=await admin.from("legacy_memory_suggestions").select("id,content,status").eq("id",id).eq("owner_id",user.id).eq("status","pending").maybeSingle();
-   if(!item)return respond({error:"Memória não encontrada"},404);
+   if(!item)return reply({error:"Memória não encontrada"},404);
    const approve=body.approve===true;
    if(approve){
     const {error:e}=await admin.from("memories").insert({user_id:user.id,title:item.content.slice(0,90),content:item.content,category:"pessoal"});
     if(e)throw e;
    }
    const {error:e}=await admin.from("legacy_memory_suggestions").update({status:approve?"approved":"discarded"}).eq("owner_id",user.id).eq("id",id);if(e)throw e;
-   return respond({ok:true});
+   return reply({ok:true});
   }
-  if(action!=="message")return respond({error:"Ação desconhecida"},400);
-  const message=String(body.message||"").trim();if(message.length<1||message.length>1600)return respond({error:"Mensagem deve ter entre 1 e 1600 caracteres"},400);
+  if(action!=="message")return reply({error:"Ação desconhecida"},400);
+  const message=String(body.message||"").trim();if(message.length<1||message.length>1600)return reply({error:"Mensagem deve ter entre 1 e 1600 caracteres"},400);
   const {data:stored}=await admin.from("legacy_chat_turns").select("role,content").eq("owner_id",user.id).order("created_at",{ascending:false}).limit(22);
   const history=(stored||[]).reverse();
   const {data:profile}=await admin.from("legacy_profiles").select("*").eq("owner_id",user.id).maybeSingle();
@@ -60,6 +63,6 @@ Deno.serve(async req=>{
   ]);if(e1||e2)throw e1||e2;
   const candidate=String(parsed.suggested_memory||"").trim();
   if(candidate.length>=8&&candidate.length<=500)await admin.from("legacy_memory_suggestions").insert({owner_id:user.id,content:candidate,source:"chat"});
-  return respond({reply:finalReply,stage:ready?"ready":"discovering",exchanges:count,memorySuggested:!!candidate});
- }catch(err){console.error("legacy-conversation",err instanceof Error?err.message:String(err));return respond({error:"Não foi possível processar agora"},500)}
+  return reply({reply:finalReply,stage:ready?"ready":"discovering",exchanges:count,memorySuggested:!!candidate});
+ }catch(err){console.error("legacy-conversation",err instanceof Error?err.message:String(err));return reply({error:"Não foi possível processar agora"},500)}
 });

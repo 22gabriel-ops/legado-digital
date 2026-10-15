@@ -19,6 +19,11 @@ workflows:
           cp sw.js web/
           cp icon-192.png web/
           cp icon-512.png web/
+          cp guardioes.html web/
+          cp privacidade.html web/
+          cp exclusao-de-dados.html web/
+          cp suporte.html web/
+          cp -R site web/
 
       - name: Validar projeto
         script: npm run check && npm test
@@ -90,6 +95,11 @@ workflows:
           cp sw.js web/
           cp icon-192.png web/
           cp icon-512.png web/
+          cp guardioes.html web/
+          cp privacidade.html web/
+          cp exclusao-de-dados.html web/
+          cp suporte.html web/
+          cp -R site web/
 
       - name: Validar projeto
         script: npm run check && npm test

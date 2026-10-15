@@ -25,7 +25,14 @@ input:focus-visible,button:focus-visible{outline:3px solid #d3b47a;outline-offse
 button{cursor:pointer;min-height:47px;border:0;border-radius:11px;padding:13px 18px;font:700 14px Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.01em;background:linear-gradient(135deg,#caa66d,#a67c41);color:#fff}
 button:hover{filter:brightness(1.05)}button.secondary{background:#f5f0e7;color:#6c5538}button.danger{background:#fbf0eb;color:#984637}button:disabled{opacity:.54;cursor:wait}
 .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:23px}.muted{color:#807568;font-size:13px;line-height:1.7}.notice{border:1px solid #e8dfd0;background:#fffaf0;border-radius:11px;padding:14px 17px;color:#796e60;font-size:12px;line-height:1.7}
-.hidden{display:none!important}#status{min-height:25px;color:#336c51;font-size:13px;line-height:1.6}#status.error{color:#a23e37}#status.ok{color:#326a4e}
+.hidden{display:none!important}
+.chat-messages{display:flex;flex-direction:column;gap:12px;min-height:160px;max-height:420px;overflow-y:auto;border:1px solid #e8e0d4;background:#faf8f3;border-radius:12px;padding:16px;scroll-behavior:smooth}
+.chat-bubble{max-width:94%;padding:11px 14px;border-radius:14px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;background:#fff;border:1px solid #e8e0d4;font-size:14px}
+.chat-bubble.mine{align-self:flex-end;background:#e9dfcf;border-color:#e4d5c0}
+.chat-bubble.theirs{align-self:flex-start}
+.chat-compose{display:flex;align-items:stretch;gap:9px;margin-top:12px}
+.chat-compose textarea{min-width:0;flex:1;resize:vertical;min-height:52px;border:1px solid #ddd4c5;border-radius:10px;padding:12px;font:inherit;background:#fff;color:#2b2825}
+@media(max-width:480px){.chat-compose{flex-direction:column}.chat-compose button{width:100%}}#status{min-height:25px;color:#336c51;font-size:13px;line-height:1.6}#status.error{color:#a23e37}#status.ok{color:#326a4e}
 .auth-logo{display:flex;justify-content:center;margin:0 0 18px}.auth-logo .tree-icon{width:86px;height:86px;color:#ad864e}.password-field{position:relative}.password-field input{padding-right:60px!important}.password-toggle{position:absolute;right:5px;top:50%;transform:translateY(-50%);width:44px;min-height:42px;padding:9px;border-radius:9px;background:transparent;color:#80684a;display:flex;align-items:center;justify-content:center}.password-toggle svg{width:22px;height:22px}.password-toggle:hover{background:#f5efe5;filter:none}.headerrow{display:flex;justify-content:space-between;align-items:center;gap:12px}.headerrow small{overflow-wrap:anywhere}
 .inline{background:none;color:#8a693f;padding:6px;text-decoration:underline;min-height:auto}.checkboxlabel{display:flex;gap:11px;align-items:flex-start;font-size:13px;line-height:1.65;color:#62584f;font-weight:500}.checkboxlabel input{margin-top:4px;accent-color:#a78451}
 @media(max-width:480px){main{padding-top:22px}.hero{padding:30px 24px}.card{padding:25px 22px}.brand-text strong{font-size:22px}.actions button{flex:1}}
@@ -161,6 +168,7 @@ select{width:100%;display:block;min-height:50px;padding:12px 14px;border:1px sol
 <label class="checkboxlabel"><input id="account-consent" type="checkbox">Autorizo o Legado Digital a entrar em contato pelo WhatsApp para apresentar o serviço e iniciar a entrevista. Posso pedir para parar quando desejar.</label>
 <div class="actions"><button id="save-phone">Salvar número</button><button id="cancel-phone-edit" class="secondary hidden">Cancelar alteração</button></div></div>
 <div id="saved-phone-panel" class="hidden"><p class="muted" id="saved-phone-label"></p><button id="edit-phone" class="inline">Alterar número</button><div class="actions"><button id="welcome-test" class="secondary">Enviar mensagem de teste</button></div><p class="muted">Disponível somente para o titular e número autorizados na Meta durante os testes.</p></div></div>
+<div class="card" id="legacy-chat-card"><h2>Conversar com meu Legado 🌳</h2><p class="muted">Uma conversa natural para construir sua história. Este Legado é uma representação por IA, não a pessoa real.</p><div id="chat-messages" class="chat-messages" role="log" aria-live="polite"><div class="chat-bubble theirs">Oi! Quero conhecer sua história. Como você gostaria de começar?</div></div><div class="chat-compose"><textarea id="chat-input" rows="2" maxlength="1600" placeholder="Escreva sua mensagem para o seu Legado..." aria-label="Mensagem para meu Legado"></textarea><button id="chat-send" type="button">Enviar</button></div><p id="chat-status" class="muted" role="status"></p></div>
 <div class="card"><h2>Meu Legado no WhatsApp 🌳</h2><p>Seu Legado nasce nas conversas naturais com você. A IA vai aprendendo seu jeito de falar, sem formulários nem comandos.</p><div class="actions"><a style="display:inline-block;background:#ab8650;color:white;text-decoration:none;padding:12px 16px;border-radius:10px;font-weight:700" href="https://wa.me/5531983116972?text=Ol%C3%A1%2C%20Legado%20Digital%21" target="_blank" rel="noopener noreferrer">Conversar com meu Legado ↗</a></div><p class="muted">No Grátis e no Plus, apenas o titular verificado interage com seu Legado.</p></div>
 <div class="card"><h2>Meu plano</h2><p><strong id="legacy-plan-label">Grátis — R$ 0/mês</strong></p><p class="muted" id="legacy-plan-desc">100 interações por mês, renovadas automaticamente sem acúmulo. Assinaturas ainda em preparação.</p><p><a href="./site/">Ver os três planos e condições →</a></p></div>
 <div class="card"><h2>Minhas memórias 🌳</h2><p>A personalidade do seu Legado nasce das conversas naturais com você. Suas memórias são preservadas mesmo se você mudar de plano.</p><p class="muted">Importação de conversas do WhatsApp e do ChatGPT: planejada para a versão 2. Não disponível nesta versão.</p></div>
@@ -243,11 +251,45 @@ async function loadLegacyPlan(){
   $('legacy-usage-status').textContent='Franquia prevista: '+(exclusive?'500 interações do Plus; uso compartilhado a definir':plus?'500 interações/mês':'100 interações/mês')+'. Contador em preparação; consumo ainda não apurado.';
  }catch{$('legacy-plan-desc').textContent='Não foi possível consultar seu plano agora.';$('legacy-usage-status').textContent='Contador indisponível. O controle de uso ainda depende do Supabase.';}
 }
+
+// Conversa autenticada integrada à área logada; falhas não bloqueiam o restante do app.
+function chatStatus(message){$('chat-status').textContent=message}
+function addChatBubble(role,content){
+ const node=document.createElement('div');node.className='chat-bubble '+(role==='user'?'mine':'theirs');
+ node.textContent=content;$('chat-messages').appendChild(node);
+ $('chat-messages').scrollTop=$('chat-messages').scrollHeight;
+}
+async function loadChat(){
+ $('chat-messages').replaceChildren();
+ addChatBubble('assistant','Oi! Quero conhecer sua história. Como você gostaria de começar?');
+ chatStatus('Carregando conversa...');
+ try{
+  const data=await authorized('/functions/v1/legacy-conversation',{method:'POST',body:{action:'list'}});
+  if(Array.isArray(data.turns)&&data.turns.length){
+   $('chat-messages').replaceChildren();
+   for(const t of data.turns)addChatBubble(t.role,t.content||'');
+  }
+  chatStatus('');
+ }catch(e){chatStatus('A conversa não carregou: '+e.message+'. Você ainda pode usar as demais funções.')}
+}
+$('chat-send').onclick=async()=>{
+ const message=$('chat-input').value.trim();if(!message)return;
+ $('chat-send').disabled=true;$('chat-input').disabled=true;chatStatus('Seu Legado está respondendo...');
+ addChatBubble('user',message);$('chat-input').value='';
+ try{
+  const data=await authorized('/functions/v1/legacy-conversation',{method:'POST',body:{action:'message',message}});
+  if(!data.reply)throw Error(data.error||'Resposta indisponível');
+  addChatBubble('assistant',data.reply);chatStatus('');
+ }catch(e){$('chat-input').value=message;chatStatus('Não foi possível responder: '+e.message+'. Tente enviar novamente.')}
+ finally{$('chat-send').disabled=false;$('chat-input').disabled=false;$('chat-input').focus()}
+};
+$('chat-input').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();if(!$('chat-send').disabled)$('chat-send').click()}});
+
 function setLoggedIn(s){
  keepSession(s);const logged=!!s?.access_token;
  $('auth').classList.toggle('hidden',logged);$('account').classList.toggle('hidden',!logged);
  $('who').textContent=s?.user?.email||'';
- if(logged){displaySavedPhone(s.user);void loadPhoneVerification();void loadLegacyPlan();}
+ if(logged){displaySavedPhone(s.user);void loadPhoneVerification();void loadLegacyPlan();void loadChat();}
 }
 // Importacoes sao acessadas pelo link da area de conta.
 $('open-guardians').onclick=()=>{location.href='./guardioes.html'};
