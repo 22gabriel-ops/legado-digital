@@ -29,7 +29,8 @@ const BASE='https://rwzksewulqpzsdbuirrq.supabase.co';
 const KEY='sb_publishable_fxQIHucd5a62h64oCEZoIg_qcoMg3cZ';
 const STORE='legado-auth-session';
 const $=id=>document.getElementById(id);
-let session=null,guardians=[],editing=null;\nconst invitationId=new URLSearchParams(location.search).get('invite');
+let session=null,guardians=[],editing=null;
+const invitationId=new URLSearchParams(location.search).get('invite');
 function message(s,bad=false){$('feedback').textContent=s;$('feedback').className=bad?'error':'ok'}
 function saveSession(s){session=s;if(s)localStorage.setItem(STORE,JSON.stringify(s));else localStorage.removeItem(STORE)}
 async function api(path,options={}) {
@@ -57,7 +58,8 @@ function draw(){
   if(!g){item.append(el('p','Nenhuma pessoa indicada.','muted'))}
   else{
    item.append(el('p',g.full_name+' · '+g.email+(g.phone?' · '+g.phone:''),'muted'));
-   item.append(el('p',g.status==='pending'?'Aguardando aceite · compartilhe o convite':'Status: '+({accepted:'Aceitou a indicação (sem acesso)',declined:'Recusou a indicação',revoked:'Revogada'}[g.status]||g.status),'status'));\n   if(g.status==='pending'){const invite=el('button','Copiar link de convite','secondary');invite.type='button';invite.onclick=async()=>{const link=new URL('./guardioes.html?invite='+encodeURIComponent(g.id),location.href).href;try{await navigator.clipboard.writeText(link);message('Link copiado. Envie você mesmo ao e-mail ou WhatsApp do guardião indicado. Nenhum envio automático foi feito.')}catch{window.prompt('Copie o link para compartilhar:',link)}};item.append(invite)}
+   item.append(el('p',g.status==='pending'?'Aguardando aceite · compartilhe o convite':'Status: '+({accepted:'Aceitou a indicação (sem acesso)',declined:'Recusou a indicação',revoked:'Revogada'}[g.status]||g.status),'status'));
+   if(g.status==='pending'){const invite=el('button','Copiar link de convite','secondary');invite.type='button';invite.onclick=async()=>{const link=new URL('./guardioes.html?invite='+encodeURIComponent(g.id),location.href).href;try{await navigator.clipboard.writeText(link);message('Link copiado. Envie você mesmo ao e-mail ou WhatsApp do guardião indicado. Nenhum envio automático foi feito.')}catch{window.prompt('Copie o link para compartilhar:',link)}};item.append(invite)}
    const edit=el('button','Editar','secondary');edit.type='button';edit.disabled=g.status!=='pending';edit.onclick=()=>{editing=g.id;$('role').value=g.role;$('full_name').value=g.full_name;$('email').value=g.email;$('phone').value=g.phone||'';$('form-title').textContent='Editar indicação';$('cancel').classList.remove('hidden');$('save').textContent='Salvar alterações';$('guardian-form').scrollIntoView({behavior:'smooth'})};
    const del=el('button','Remover','danger');del.type='button';del.onclick=async()=>{if(!confirm('Remover esta indicação?'))return;del.disabled=true;try{await api('/rest/v1/legacy_guardians?id=eq.'+encodeURIComponent(g.id),{method:'DELETE'});reset();await load();message('Indicação removida.')}catch(e){message(e.message,true)}finally{del.disabled=false}};
    item.append(edit,del);
@@ -79,6 +81,17 @@ $('guardian-form').onsubmit=async e=>{
   reset();await load();message('Indicação salva com segurança. Nenhum convite foi enviado.');
  }catch(err){message('Não foi possível salvar: '+err.message,true)}finally{save.disabled=false}
 };
+async function respondToInvitation(decision){
+ const yes=$('accept-invitation'),no=$('decline-invitation');
+ yes.disabled=true;no.disabled=true;
+ try{
+  await api('/rest/v1/rpc/respond_guardian_invitation',{method:'POST',body:{p_guardian_id:invitationId,p_decision:decision}});
+  $('invitation-feedback').textContent=decision==='accepted'?'Indicação aceita. Nenhum acesso às memórias foi liberado.':'Indicação recusada.';
+  $('invitation-description').textContent='Resposta registrada com sucesso.';
+ }catch(e){$('invitation-feedback').textContent='Não foi possível responder: '+e.message;yes.disabled=false;no.disabled=false}
+}
+$('accept-invitation').onclick=()=>respondToInvitation('accepted');
+$('decline-invitation').onclick=()=>respondToInvitation('declined');
 (async()=>{
  try{
   session=JSON.parse(localStorage.getItem(STORE)||'null');
@@ -86,8 +99,9 @@ $('guardian-form').onsubmit=async e=>{
   await refresh();
   const user=await api('/auth/v1/user');
   session.user=user;saveSession(session);
-  $('gate').classList.add('hidden');$('panel').classList.remove('hidden');
-  await load();
+  $('gate').classList.add('hidden');
+  if(invitationId){$('invitation').classList.remove('hidden')}
+  else{$('panel').classList.remove('hidden');await load()}
  }catch(e){$('gate').classList.remove('hidden');$('gate').replaceChildren(el('p',e.message+'. Entre pelo site com o e-mail indicado no convite.'));message('Não foi possível validar a sessão.',true)}
 })();
 </script></body></html>
