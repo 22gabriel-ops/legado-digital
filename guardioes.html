@@ -5,7 +5,7 @@
 :root{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:#30281f;background:#faf8f3}*{box-sizing:border-box}body{margin:0}main{max-width:650px;padding:26px 18px 70px;margin:auto}a{color:#906b3a}h1,h2{font-family:Georgia,serif;font-weight:400}h1{font-size:37px;margin:20px 0 12px}h2{font-size:25px;margin:0 0 12px}.card{background:#fff;border:1px solid #e9dfd0;border-radius:18px;padding:25px;margin:16px 0}.muted{color:#776d61;font-size:14px;line-height:1.65}.notice{background:#fff9ed;border:1px solid #ebddc1;border-radius:12px;padding:14px;font-size:13px;line-height:1.6}label{display:block;font-size:13px;font-weight:700;margin:15px 0 7px}input,select{display:block;width:100%;padding:14px;border:1px solid #d8cbbb;border-radius:10px;background:#fff;font:inherit}button{border:0;border-radius:10px;padding:13px 18px;background:#a98249;color:#fff;font-weight:700;cursor:pointer;margin:12px 8px 0 0}button.secondary{background:#f1eadf;color:#604b32}button.danger{background:#faece7;color:#983d32}button:disabled{opacity:.5}.hidden{display:none!important}.item{border-top:1px solid #eadfcd;padding:15px 0}.item strong{display:block}.status{font-size:13px;color:#765c37}#feedback{min-height:20px;font-size:14px}#feedback.error{color:#a6372d}#feedback.ok{color:#2e684c}
 </style></head><body><main>
 <a href="./index.html">← Voltar à minha conta</a>
-<h1>Guardiões do legado</h1>
+<h1>Guardiões do legado</h1><p class="muted" id="build-info">Versão 12 · convites e aceites</p>
 <p class="muted">Escolha quem poderá cuidar do seu legado no futuro. Você pode indicar uma pessoa principal e uma substituta.</p>
 <div class="notice"><strong>Importante:</strong> este cadastro registra apenas sua indicação. Você poderá compartilhar um link de convite com cada pessoa. Aceitar o convite não concede acesso a memórias nem poderes de administração. A liberação futura exigirá um processo separado de verificação e autorização.</div>
 <p id="feedback" role="status" aria-live="polite"></p>
@@ -24,6 +24,7 @@
 </form></div></section>
 </main>
 <script>
+window.addEventListener('error',function(event){const gate=document.getElementById('gate');if(gate&&!gate.classList.contains('hidden')){gate.textContent='Erro ao carregar a página: '+(event.message||'Falha no JavaScript')+' · versão 12. Atualize com Ctrl+F5.';}});
 'use strict';
 const BASE='https://rwzksewulqpzsdbuirrq.supabase.co';
 const KEY='sb_publishable_fxQIHucd5a62h64oCEZoIg_qcoMg3cZ';
@@ -44,7 +45,8 @@ async function api(path,options={}) {
  try{return await call()}catch(e){if(/jwt expired|invalid jwt/i.test(e.message)){await refresh();return call()}throw e}
 }
 async function refresh(){
- const res=await fetch(BASE+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:session.refresh_token})});
+ const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),12000);
+ let res;try{res=await fetch(BASE+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:session.refresh_token}),signal:controller.signal})}catch(e){throw Error(e.name==='AbortError'?'A autenticação demorou mais de 12 segundos. Tente novamente.':'Não foi possível conectar ao Supabase.')}finally{clearTimeout(timer)}
  if(!res.ok)throw Error('Sessão expirada. Entre novamente.');
  saveSession(await res.json());
 }
