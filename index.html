@@ -311,7 +311,9 @@ async function loadChat(){
   const data=await authorized('/functions/v1/legacy-conversation',{method:'POST',body:{action:'list'}});
   if(Array.isArray(data.turns)&&data.turns.length){
    $('chat-messages').replaceChildren();
-   for(const t of data.turns)addChatBubble(t.role,t.content||'');
+   const chronological=[...data.turns].sort((a,b)=>Date.parse(a.created_at||0)-Date.parse(b.created_at||0));
+   for(const t of chronological)addChatBubble(t.role,t.content||'');
+   requestAnimationFrame(()=>{$('chat-messages').scrollTop=$('chat-messages').scrollHeight});
   }
   chatStatus('');
  }catch(e){chatStatus('A conversa não carregou: '+e.message+'. Você ainda pode usar as demais funções.')}
