@@ -52,7 +52,7 @@ Deno.serve(async req=>{
   if(!completion.ok)throw new Error("IA "+completion.status);
   const result=await completion.json();
   const parsed=JSON.parse(result.choices?.[0]?.message?.content||"{}");
-  const reply=String(parsed.reply||"Quero te conhecer melhor. Qual história você gostaria de me contar?").slice(0,3500);
+  const aiReply=String(parsed.reply||"Quero te conhecer melhor. Qual história você gostaria de me contar?").slice(0,3500);
   const count=(profile?.exchanges||0)+1;
   // A conclusao da primeira versao exige varias trocas; revisoes sempre permanecem explicitas.
   const ready=stage==="ready"||(count>=12&&String(parsed.summary||"").length>=180);
