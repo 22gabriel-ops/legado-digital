@@ -113,7 +113,7 @@ select{width:100%;display:block;min-height:50px;padding:12px 14px;border:1px sol
 <div id="whatsapp-otp-panel" class="hidden">
   <p class="muted">Confirme que este número pertence a você. Enviaremos um código de seis dígitos pelo WhatsApp; ele expira em dez minutos.</p>
   <div class="actions"><button id="request-whatsapp-code" type="button">Enviar código de verificação</button></div>
-  <div id="whatsapp-code-entry" class="hidden">
+  <p id="whatsapp-otp-countdown" class="muted" aria-live="off"></p>\n  <div id="whatsapp-code-entry" class="hidden">
     <label for="whatsapp-code">Código recebido no WhatsApp</label>
     <input id="whatsapp-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="000000">
     <div class="actions"><button id="confirm-whatsapp-code" type="button">Confirmar código</button></div>
@@ -237,6 +237,28 @@ function displaySavedPhone(user){
  $('cancel-phone-edit').classList.toggle('hidden',!saved||!agreed);
  $('saved-phone-label').textContent=saved&&agreed?'WhatsApp salvo: +'+saved:'';
 }
+let otpExpiry=0;
+let otpTicker=null;
+function otpFeedback(text,bad=false){
+ $('whatsapp-code-status').textContent=text;
+ $('whatsapp-code-status').style.color=bad?'#a6372d':'#2e684c';
+}
+function renderOtpCountdown(){
+ const countdown=$('whatsapp-otp-countdown');
+ const seconds=Math.max(0,Math.ceil((otpExpiry-Date.now())/1000));
+ const pending=seconds>0;
+ $('whatsapp-code-entry').classList.toggle('hidden',!pending);
+ $('request-whatsapp-code').disabled=pending;
+ countdown.textContent=pending?'Código pendente: '+Math.floor(seconds/60)+':'+String(seconds%60).padStart(2,'0')+' restantes. Você já pode digitá-lo abaixo.':'Você pode solicitar um novo código.';
+ if(!pending&&otpTicker){clearInterval(otpTicker);otpTicker=null}
+}
+function setOtpExpiry(value){
+ const next=Date.parse(value);
+ otpExpiry=Number.isFinite(next)?next:0;
+ if(otpTicker){clearInterval(otpTicker);otpTicker=null}
+ renderOtpCountdown();
+ if(otpExpiry>Date.now())otpTicker=setInterval(renderOtpCountdown,1000);
+}
 async function loadPhoneVerification(){
  const label=$('phone-verification-status');
  const button=$('welcome-test');
@@ -244,20 +266,29 @@ async function loadPhoneVerification(){
  button.disabled=true;
  const phone='+'+String(session?.user?.user_metadata?.whatsapp_phone||'').replace(/\D/g,'');
  const agreed=!!session?.user?.user_metadata?.whatsapp_opt_in;
- panel.classList.toggle('hidden',!agreed||phone.length<8);
- if(!agreed||phone.length<8){label.textContent='Cadastre e autorize seu WhatsApp para iniciar a verificação.';return}
- label.textContent='Verificando confirmação do WhatsApp...';
+ const eligible=agreed&&phone.length>=8;
+ panel.classList.toggle('hidden',!eligible);
+ if(!eligible){
+  setOtpExpiry('');
+  label.textContent='Salve seu número e marque a autorização de contato para ativar a verificação. Se já fez isso no aplicativo, atualize ou entre no site.';
+  return;
+ }
+ label.textContent='Consultando a verificação do WhatsApp...';
  try{
-  const rows=await authorized('/rest/v1/legacy_phone_verifications?select=phone_e164,status&status=eq.verified&limit=20');
-  const verified=Array.isArray(rows)&&rows.some(row=>row.phone_e164===phone);
-  label.textContent=verified?'WhatsApp verificado.':'WhatsApp ainda não verificado. Solicite o código abaixo.';
+  const rows=await authorized('/rest/v1/legacy_phone_verifications?select=phone_e164,status,expires_at&order=created_at.desc&limit=20');
+  const owned=Array.isArray(rows)?rows.filter(row=>row.phone_e164===phone):[];
+  const verified=owned.some(row=>row.status==='verified');
+  label.textContent=verified?'WhatsApp verificado.':'WhatsApp ainda não verificado.';
   panel.classList.toggle('hidden',verified);
   button.disabled=!verified;
- }catch(e){label.textContent='Não foi possível consultar a verificação. Tente novamente.';button.disabled=true}
-}
-function otpFeedback(text,bad=false){
- $('whatsapp-code-status').textContent=text;
- $('whatsapp-code-status').style.color=bad?'#a6372d':'#2e684c';
+  if(verified){setOtpExpiry('');return}
+  const pending=owned.find(row=>row.status==='pending'&&Date.parse(row.expires_at)>Date.now());
+  setOtpExpiry(pending?.expires_at||'');
+ }catch(e){
+  label.textContent='Não foi possível consultar a verificação. Verifique sua conexão e tente novamente.';
+  // Não bloquear o pedido por falha de consulta; o servidor aplica cooldown e pendência.
+  setOtpExpiry('');
+ }
 }
 $('request-whatsapp-code').onclick=async()=>{
  const phone='+'+String(session?.user?.user_metadata?.whatsapp_phone||'').replace(/\D/g,'');
@@ -265,10 +296,13 @@ $('request-whatsapp-code').onclick=async()=>{
  busy('request-whatsapp-code',true);
  try{
   const result=await authorized('/functions/v1/verify-whatsapp',{method:'POST',body:{action:'request',phone}});
-  $('whatsapp-code-entry').classList.remove('hidden');
-  otpFeedback(result.message||'Código enviado. Verifique seu WhatsApp.');
- }catch(e){otpFeedback('Não foi possível enviar o código: '+e.message,true)}
- finally{busy('request-whatsapp-code',false)}
+  otpFeedback(result.message||'Solicitação aceita pela Meta. Aguarde o WhatsApp.');
+  await loadPhoneVerification();
+ }catch(e){
+  otpFeedback('Não foi possível solicitar outro código: '+e.message,true);
+  await loadPhoneVerification();
+ }
+ finally{if(!otpExpiry||otpExpiry<=Date.now())busy('request-whatsapp-code',false)}
 };
 $('confirm-whatsapp-code').onclick=async()=>{
  const code=$('whatsapp-code').value.trim();
@@ -278,10 +312,10 @@ $('confirm-whatsapp-code').onclick=async()=>{
   const r=await authorized('/functions/v1/verify-whatsapp',{method:'POST',body:{action:'confirm',code}});
   if(!r.verified)throw Error('Confirmação não concluída.');
   $('whatsapp-code').value='';
-  $('whatsapp-code-entry').classList.add('hidden');
+  setOtpExpiry('');
   otpFeedback('Número confirmado com sucesso!');
   await loadPhoneVerification();
- }catch(e){otpFeedback('Não foi possível confirmar: '+e.message,true)}
+ }catch(e){otpFeedback('Não foi possível confirmar: '+e.message,true);await loadPhoneVerification()}
  finally{busy('confirm-whatsapp-code',false)}
 };
 async function loadLegacyPlan(){
