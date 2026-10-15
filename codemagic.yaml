@@ -66,6 +66,23 @@ workflows:
           xcrun simctl io "$UDID" screenshot build/screenshots/Legado_Digital_iPad_13.png
           sips -g pixelWidth -g pixelHeight build/screenshots/Legado_Digital_iPad_13.png
 
+
+      - name: Testar login e navegação reais no simulador iPad
+        script: |
+          set -e
+          set +x
+          : "${MAESTRO_TEST_EMAIL:?Configure MAESTRO_TEST_EMAIL como segredo no Codemagic}"
+          : "${MAESTRO_TEST_PASSWORD:?Configure MAESTRO_TEST_PASSWORD como segredo no Codemagic}"
+          UDID="$(cat /tmp/legado_ipad_udid)"
+          # Official Maestro CLI installer documented by Codemagic.
+          curl -Ls "https://get.maestro.mobile.dev" | bash
+          export PATH="$HOME/.maestro/bin:$PATH"
+          mkdir -p build/screenshots
+          maestro --device "$UDID" test \
+            -e "TEST_EMAIL=$MAESTRO_TEST_EMAIL" \
+            -e "TEST_PASSWORD=$MAESTRO_TEST_PASSWORD" \
+            .maestro/ipad-post-login.yaml
+
     artifacts:
       - build/simulator/Build/Products/Debug-iphonesimulator/*.app
       - build/screenshots/*.png

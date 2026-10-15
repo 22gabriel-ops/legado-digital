@@ -1,0 +1,36 @@
+appId: com.gabrielcruz.legadodigital
+---
+# Use a dedicated, confirmed-email testing account; values are injected from Codemagic secrets.
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Entrar"
+    timeout: 30000
+- tapOn:
+    text: "E-mail"
+- inputText: ${TEST_EMAIL}
+- tapOn:
+    text: "Senha"
+- inputText: ${TEST_PASSWORD}
+- hideKeyboard
+- tapOn:
+    text: "Entrar"
+- extendedWaitUntil:
+    visible: "Conta criada"
+    timeout: 45000
+- scrollUntilVisible:
+    element: "Conversar com meu Legado"
+    direction: DOWN
+    timeout: 30000
+- assertVisible: "Escreva sua mensagem para o seu Legado..."
+- assertVisible: "Enviar"
+- takeScreenshot: "build/screenshots/ipad-apos-login"
+- scrollUntilVisible:
+    element: "Cadastrar guardiões"
+    direction: DOWN
+    timeout: 30000
+- tapOn: "Cadastrar guardiões"
+- extendedWaitUntil:
+    visible: "Guardiões do legado"
+    timeout: 30000
+- takeScreenshot: "build/screenshots/ipad-guardioes"
