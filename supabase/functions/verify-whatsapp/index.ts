@@ -238,7 +238,18 @@ Deno.serve(async (req) => {
 
       }
 
-      return reply({ ok: true, message: 'Código enviado para o WhatsApp cadastrado', expires_in_seconds: 600 });
+      // HTTP 200/201 da Meta significa aceitação para processamento, não entrega no aparelho.
+      const receipt = await sent.json().catch(() => null);
+      const messageId = typeof receipt?.messages?.[0]?.id === 'string' ? receipt.messages[0].id : null;
+      const messageStatus = typeof receipt?.messages?.[0]?.message_status === 'string' ? receipt.messages[0].message_status : 'accepted';
+      if (!messageId) {
+        console.error('OTP Meta response missing message ID', { httpStatus: sent.status });
+        await admin.from('legacy_phone_verifications').update({ status: 'cancelled' }).eq('id', attempt.id).eq('status', 'pending');
+        return reply({ error: 'A Meta não confirmou o recebimento do pedido. Tente novamente mais tarde.' }, 502);
+      }
+      // Registrar apenas metadados de transporte. NUNCA registrar o OTP, telefone ou token.
+      console.info('OTP Meta request accepted', { messageId, messageStatus, httpStatus: sent.status });
+      return reply({ ok: true, message: 'Código solicitado à Meta. Aguarde o recebimento no WhatsApp.', expires_in_seconds: 600 });
 
     }
 
