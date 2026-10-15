@@ -35,7 +35,7 @@ async function api(path,options={}) {
  if(!session?.access_token)throw Error('Entre na sua conta.');
  const call=async()=>{
   const res=await fetch(BASE+path,{method:options.method||'GET',headers:{apikey:KEY,Authorization:'Bearer '+session.access_token,'Content-Type':'application/json',Prefer:'return=minimal'},body:options.body===undefined?undefined:JSON.stringify(options.body)});
-  if(!res.ok){let e;try{e=await res.json()}catch{}throw Error(e?.message||e?.error||'Falha no servidor ('+res.status+')')}
+  if(!res.ok){let e;try{e=await res.json()}catch{}const detail=e?.message||e?.error_description||e?.error||'Falha no servidor';throw Error(detail+' (HTTP '+res.status+')')}
   if(res.status===204)return null;const raw=await res.text();return raw?JSON.parse(raw):null;
  };
  if(session.expires_at&&Date.now()/1000>=session.expires_at-60)await refresh();
@@ -81,12 +81,17 @@ $('guardian-form').onsubmit=async e=>{
 (async()=>{
  try{
   session=JSON.parse(localStorage.getItem(STORE)||'null');
-  if(!session?.refresh_token)throw Error('Entre na sua conta primeiro.');
+  if(!session?.refresh_token)throw Error('Faça login na página principal para cadastrar guardiões.');
   await refresh();
   const user=await api('/auth/v1/user');
   session.user=user;saveSession(session);
   $('gate').classList.add('hidden');$('panel').classList.remove('hidden');
   await load();
- }catch(e){$('gate').replaceChildren(el('p',e.message+'. Volte à tela inicial e faça login.'));message('Cadastro indisponível até a autenticação e a criação da tabela no Supabase.',true)}
+ }catch(e){
+  $('panel').classList.add('hidden');$('gate').classList.remove('hidden');
+  $('gate').replaceChildren(el('p','Não foi possível carregar suas indicações: '+e.message));
+  const back=el('a','Voltar à conta e entrar novamente');back.href='./index.html?app=1';$('gate').append(back);
+  message('Não foi possível abrir o cadastro. Confira o erro apresentado abaixo.',true);
+ }
 })();
 </script></body></html>
