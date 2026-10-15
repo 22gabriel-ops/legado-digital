@@ -242,7 +242,7 @@ async function loadPhoneVerification(){
  const button=$('welcome-test');
  const panel=$('whatsapp-otp-panel');
  button.disabled=true;
- const phone='+'+String(session?.user?.user_metadata?.whatsapp_phone||'').replace(/\\D/g,'');
+ const phone='+'+String(session?.user?.user_metadata?.whatsapp_phone||'').replace(/\D/g,'');
  const agreed=!!session?.user?.user_metadata?.whatsapp_opt_in;
  panel.classList.toggle('hidden',!agreed||phone.length<8);
  if(!agreed||phone.length<8){label.textContent='Cadastre e autorize seu WhatsApp para iniciar a verificação.';return}
@@ -260,7 +260,7 @@ function otpFeedback(text,bad=false){
  $('whatsapp-code-status').style.color=bad?'#a6372d':'#2e684c';
 }
 $('request-whatsapp-code').onclick=async()=>{
- const phone='+'+String(session?.user?.user_metadata?.whatsapp_phone||'').replace(/\\D/g,'');
+ const phone='+'+String(session?.user?.user_metadata?.whatsapp_phone||'').replace(/\D/g,'');
  if(phone.length<8){otpFeedback('Salve um número válido antes de solicitar o código.',true);return}
  busy('request-whatsapp-code',true);
  try{
@@ -272,7 +272,7 @@ $('request-whatsapp-code').onclick=async()=>{
 };
 $('confirm-whatsapp-code').onclick=async()=>{
  const code=$('whatsapp-code').value.trim();
- if(!/^\\d{6}$/.test(code)){otpFeedback('Informe os seis dígitos do código.',true);return}
+ if(!/^\d{6}$/.test(code)){otpFeedback('Informe os seis dígitos do código.',true);return}
  busy('confirm-whatsapp-code',true);
  try{
   const r=await authorized('/functions/v1/verify-whatsapp',{method:'POST',body:{action:'confirm',code}});
