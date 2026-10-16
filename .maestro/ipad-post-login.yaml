@@ -15,6 +15,7 @@ appId: com.gabrielcruz.legadodigital
 - hideKeyboard
 - tapOn:
     text: "Entrar"
+    index: 1
 - extendedWaitUntil:
     visible: "Conta criada"
     timeout: 45000
