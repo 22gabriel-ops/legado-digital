@@ -64,7 +64,7 @@ workflows:
           xcrun simctl status_bar "$UDID" override --time "9:41" --batteryState charged --batteryLevel 100 --wifiMode active --wifiBars 3 || true
           xcrun simctl install "$UDID" build/simulator/Build/Products/Debug-iphonesimulator/App.app
           xcrun simctl launch "$UDID" com.gabrielcruz.legadodigital
-          sleep 20
+          sleep 35
           xcrun simctl io "$UDID" screenshot build/screenshots/Legado_Digital_iPad_13.png
           sips -g pixelWidth -g pixelHeight build/screenshots/Legado_Digital_iPad_13.png
 
@@ -86,6 +86,26 @@ workflows:
             -e "TEST_EMAIL=$MAESTRO_TEST_EMAIL" \
             -e "TEST_PASSWORD=$MAESTRO_TEST_PASSWORD" \
             .maestro/ipad-post-login.yaml
+          # Maestro stores takeScreenshot files under its own test output directory.
+          # Copy them to Codemagic artifacts and fail explicitly if absent.
+          python3 - <<'PY'
+          from pathlib import Path
+          import shutil
+          root = Path.home()/'.maestro'/'tests'
+          dest = Path('build/screenshots')
+          dest.mkdir(parents=True, exist_ok=True)
+          for name, target in (
+              ('ipad-apos-login', 'Legado_Digital_iPad_13_Conversa.png'),
+              ('ipad-guardioes', 'Legado_Digital_iPad_13_Guardioes.png'),
+          ):
+              candidates = [p for p in root.rglob('*') if p.is_file() and p.stem == name and p.suffix.lower() == '.png']
+              if not candidates:
+                  raise SystemExit('Captura Maestro ausente: ' + name)
+              src = max(candidates, key=lambda p: p.stat().st_mtime)
+              shutil.copyfile(src, dest/target)
+              print('Captura exportada:', dest/target)
+          PY
+          sips -g pixelWidth -g pixelHeight build/screenshots/Legado_Digital_iPad_13_Conversa.png build/screenshots/Legado_Digital_iPad_13_Guardioes.png
 
     artifacts:
       - build/simulator/Build/Products/Debug-iphonesimulator/*.app
