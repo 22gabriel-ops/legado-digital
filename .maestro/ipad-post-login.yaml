@@ -27,6 +27,7 @@ appId: com.gabrielcruz.legadodigital
     timeout: 30000
 - assertVisible: "Escreva sua mensagem para o seu Legado..."
 - assertVisible: "Enviar"
+- waitForAnimationToEnd
 - takeScreenshot: "build/screenshots/ipad-apos-login"
 - scrollUntilVisible:
     element: "Cadastrar guardiões"
@@ -36,4 +37,9 @@ appId: com.gabrielcruz.legadodigital
 - extendedWaitUntil:
     visible: "Guardiões do legado"
     timeout: 30000
+- extendedWaitUntil:
+    visible: "Pessoa convidada (demonstração)"
+    timeout: 30000
+- assertNotVisible: "Carregando…"
+- waitForAnimationToEnd
 - takeScreenshot: "build/screenshots/ipad-guardioes"
