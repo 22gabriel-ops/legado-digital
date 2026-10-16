@@ -80,6 +80,8 @@ workflows:
           curl -Ls "https://get.maestro.mobile.dev" | bash
           export PATH="$HOME/.maestro/bin:$PATH"
           mkdir -p build/screenshots
+          # On failure, preserve the actual screen without exposing login secrets.
+          trap 'xcrun simctl io "$UDID" screenshot build/screenshots/ipad-login-falha.png || true' ERR
           maestro --device "$UDID" test \
             -e "TEST_EMAIL=$MAESTRO_TEST_EMAIL" \
             -e "TEST_PASSWORD=$MAESTRO_TEST_PASSWORD" \
