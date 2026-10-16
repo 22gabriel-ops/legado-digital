@@ -58,25 +58,31 @@ workflows:
           </style></head>""",1)
           index.write_text(html)
           guardians = Path('web/guardioes.html')
-          html = guardians.read_text()
-          begin = html.index('async function load(){')
-          finish = html.index("$('cancel').onclick=reset;",begin)
-          demo = """async function load(){
-            guardians=[
-              {id:'demo-primary',role:'primary',full_name:'Pessoa convidada (demonstração)',email:'',phone:null,status:'pending'},
-              {id:'demo-alternate',role:'alternate',full_name:'Outra pessoa convidada (demonstração)',email:'',phone:null,status:'pending'}
-            ];
-            draw();
-          }
-          """
-          html = html[:begin] + demo + html[finish:]
-          html = html.replace('</head>',"""<style>
-          #guardian-form {display:none!important}
-          </style></head>""",1)
-          guardians.write_text(html)
-          # In the simulator build, no real phone, email, or chat content is needed for captures.
-          assert 'async function loadChat(){' in index.read_text()
+          original = guardians.read_text()
+          # Static capture-only page: never boot the live guardians JavaScript.
+          # This avoids loading private guardians while rendering App Store images.
+          style = original[original.index('<style>'):original.index('</style>')+len('</style>')]
+          demo_page = """<!doctype html><html lang="pt-BR"><head>
+          <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+          <title>Legado Digital · Guardiões</title>
+          """ + style + """
+          </head><body><main>
+          <a href="./index.html?app=1">← Voltar à minha conta</a>
+          <h1>Guardiões do legado</h1>
+          <p class="muted">Escolha quem poderá cuidar do seu legado no futuro. Você pode indicar uma pessoa principal e uma substituta.</p>
+          <div class="notice"><strong>Importante:</strong> aceitar uma indicação não concede acesso às memórias. A liberação futura exige verificação e autorização separadas.</div>
+          <div class="card"><h2>Minhas indicações</h2>
+          <div class="item"><strong>Guardião principal</strong>
+          <p class="muted">Pessoa convidada (demonstração)</p>
+          <p class="status">Aguardando aceite · convite ainda não enviado</p></div>
+          <div class="item"><strong>Guardião substituto</strong>
+          <p class="muted">Outra pessoa convidada (demonstração)</p>
+          <p class="status">Aguardando aceite · convite ainda não enviado</p></div>
+          </div></main></body></html>"""
+          guardians.write_text(demo_page)
+          assert '<script>' not in guardians.read_text()
           assert 'Pessoa convidada (demonstração)' in guardians.read_text()
+
           PY
 
       - name: Validar projeto
