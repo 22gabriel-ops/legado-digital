@@ -53,7 +53,7 @@ workflows:
           # Conceal real personal/account fields in simulator screenshots.
           # Keep the chat and Guardians navigation accessible to Maestro.
           html = html.replace('</head>',"""<style>
-          #account > .card:not(#legacy-chat-card):not(:has(#open-guardians)) {visibility:hidden!important}
+          #account > .card:not(#legacy-chat-card):not(:has(#open-guardians)):not(:has(#who)) {visibility:hidden!important}
           #who,#saved-phone-label,#account-phone,#account-consent,#whatsapp-code-status {visibility:hidden!important}
           </style></head>""",1)
           index.write_text(html)
