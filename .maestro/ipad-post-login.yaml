@@ -23,6 +23,10 @@ appId: com.gabrielcruz.legadodigital
     element: "Conversar com meu Legado"
     direction: UP
     timeout: 30000
+- scrollUntilVisible:
+    element: "Escreva sua mensagem para o seu Legado..."
+    direction: DOWN
+    timeout: 30000
 - assertVisible: "Escreva sua mensagem para o seu Legado..."
 - assertVisible: "Enviar"
 - takeScreenshot: "build/screenshots/ipad-apos-login"
