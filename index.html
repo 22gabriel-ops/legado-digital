@@ -321,12 +321,12 @@ async function loadChat(){
 $('chat-send').onclick=async()=>{
  const message=$('chat-input').value.trim();if(!message)return;
  $('chat-send').disabled=true;$('chat-input').disabled=true;chatStatus('Seu Legado está respondendo...');
- addChatBubble('user',message);$('chat-input').value='';
+ addChatBubble('user',message);const pendingBubble=$('chat-messages').lastElementChild;$('chat-input').value='';
  try{
   const data=await authorized('/functions/v1/legacy-conversation',{method:'POST',body:{action:'message',message}});
   if(!data.reply)throw Error(data.error||'Resposta indisponível');
   addChatBubble('assistant',data.reply);chatStatus('');
- }catch(e){$('chat-input').value=message;chatStatus('Não foi possível responder: '+e.message+'. Tente enviar novamente.')}
+ }catch(e){if(pendingBubble?.parentNode)pendingBubble.remove();$('chat-input').value=message;chatStatus('Não foi possível confirmar o envio: '+e.message+'. Confira o histórico antes de tentar novamente para evitar duplicações.')}
  finally{$('chat-send').disabled=false;$('chat-input').disabled=false;$('chat-input').focus()}
 };
 $('chat-input').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();if(!$('chat-send').disabled)$('chat-send').click()}});
