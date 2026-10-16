@@ -121,6 +121,7 @@ function guardianPhoneValue(){
  const local=raw.replace(/\D/g,'');
  const code=$('guardian-country').value;
  const digits=raw.startsWith('+')?local:code+local;
+ if(raw.startsWith('+')&&!Array.from($('guardian-country').options).some(o=>digits.startsWith(o.value)))throw Error('Selecione o país correspondente ao código internacional.');
  if(!/^\d{7,15}$/.test(digits))throw Error('Informe um WhatsApp válido com DDD e código do país (7 a 15 dígitos).');
  return '+'+digits;
 }
