@@ -37,8 +37,9 @@ appId: com.gabrielcruz.legadodigital
 - extendedWaitUntil:
     visible: "Guardiões do legado"
     timeout: 30000
-- extendedWaitUntil:
-    visible: "Pessoa convidada (demonstração)"
+- scrollUntilVisible:
+    element: "Pessoa convidada (demonstração)"
+    direction: DOWN
     timeout: 30000
 - assertNotVisible: "Carregando…"
 - waitForAnimationToEnd
