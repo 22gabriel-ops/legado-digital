@@ -121,7 +121,7 @@ function guardianPhoneValue(){
  const local=raw.replace(/\D/g,'');
  const code=$('guardian-country').value;
  const digits=raw.startsWith('+')?local:code+local;
- if(raw.startsWith('+')&&!Array.from($('guardian-country').options).some(o=>digits.startsWith(o.value)))throw Error('Selecione o país correspondente ao código internacional.');
+ if(raw.startsWith('+')&&!digits.startsWith(code))throw Error('O código digitado não corresponde ao país selecionado. Informe apenas o número local ou escolha o país correto.');
  if(!/^\d{7,15}$/.test(digits))throw Error('Informe um WhatsApp válido com DDD e código do país (7 a 15 dígitos).');
  return '+'+digits;
 }
@@ -134,7 +134,7 @@ function draw(){
   else{
    item.append(el('p',g.full_name+' · '+g.email+(g.phone?' · '+g.phone:''),'muted'));
    item.append(el('p',g.status==='pending'?'Aguardando aceite · compartilhe o convite':'Status: '+({accepted:'Aceitou a indicação (sem acesso)',declined:'Recusou a indicação',revoked:'Revogada'}[g.status]||g.status),'status'));
-   if(g.status==='pending'){const invite=el('button','Copiar link de convite','secondary');invite.type='button';invite.onclick=async()=>{const link=new URL('./guardioes.html?invite='+encodeURIComponent(g.id),location.href).href;try{await navigator.clipboard.writeText(link);message('Link copiado. Envie você mesmo ao e-mail ou WhatsApp do guardião indicado. Nenhum envio automático foi feito.')}catch{window.prompt('Copie o link para compartilhar:',link)}};item.append(invite)}
+   if(g.status==='pending'){const invite=el('button','Copiar link de convite','secondary');invite.type='button';invite.onclick=async()=>{const link='https://legadodigitalapp.com.br/guardioes.html?invite='+encodeURIComponent(g.id);try{await navigator.clipboard.writeText(link);message('Link copiado. Envie você mesmo ao e-mail ou WhatsApp do guardião indicado. Nenhum envio automático foi feito.')}catch{window.prompt('Copie o link para compartilhar:',link)}};item.append(invite)}
    const edit=el('button','Editar','secondary');edit.type='button';edit.disabled=g.status!=='pending';edit.onclick=()=>{editing=g.id;$('role').value=g.role;$('full_name').value=g.full_name;$('email').value=g.email;setGuardianPhone(g.phone);$('form-title').textContent='Editar indicação';$('cancel').classList.remove('hidden');$('save').textContent='Salvar alterações';$('guardian-form').scrollIntoView({behavior:'smooth'})};
    const del=el('button','Remover','danger');del.type='button';del.onclick=async()=>{if(!confirm('Remover esta indicação?'))return;del.disabled=true;try{await api('/rest/v1/legacy_guardians?id=eq.'+encodeURIComponent(g.id),{method:'DELETE'});reset();await load();message('Indicação removida.')}catch(e){message(e.message,true)}finally{del.disabled=false}};
    item.append(edit,del);
