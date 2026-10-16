@@ -21,7 +21,7 @@ appId: com.gabrielcruz.legadodigital
     timeout: 45000
 - scrollUntilVisible:
     element: "Conversar com meu Legado"
-    direction: DOWN
+    direction: UP
     timeout: 30000
 - assertVisible: "Escreva sua mensagem para o seu Legado..."
 - assertVisible: "Enviar"
