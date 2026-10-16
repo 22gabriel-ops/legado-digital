@@ -27,6 +27,85 @@ workflows:
           cp suporte.html web/
           cp -R site web/
 
+      - name: Aplicar dados fictícios somente nas capturas do simulador
+        script: |
+          python3 - <<'PY'
+          from pathlib import Path
+          # This changes only the simulator's web/ copy, never the repository's
+          # index.html or guardioes.html (nor the App Store workflow).
+          index = Path('web/index.html')
+          demo_chat = """
+          <script>
+          (() => {
+            const safe = () => {
+              const account = document.getElementById('account');
+              if (!account || account.classList.contains('hidden')) return;
+              const who = document.getElementById('who');
+              if (who) who.textContent = 'Conta de demonstração';
+              const chat = document.getElementById('chat-messages');
+              if (chat && chat.children.length) {
+                const examples = [
+                  ['assistant', 'Olá! Quero conhecer suas histórias. Qual lembrança você gostaria de guardar?'],
+                  ['user', 'Adoro reunir meus amigos nos fins de semana.'],
+                  ['assistant', 'Que boa lembrança! O que torna esses encontros especiais para você?']
+                ];
+                if (chat.dataset.demo !== '1') {
+                  chat.replaceChildren();
+                  for (const [role,content] of examples) {
+                    const b = document.createElement('div');
+                    b.className = 'chat-bubble ' + (role === 'user' ? 'mine' : 'theirs');
+                    b.textContent = content;
+                    chat.append(b);
+                  }
+                  chat.dataset.demo = '1';
+                  chat.scrollTop = chat.scrollHeight;
+                }
+              }
+            };
+            setInterval(safe, 400);
+          })();
+          </script>
+          """
+          index.write_text(index.read_text().replace('</body>',demo_chat+'</body>'))
+          guardians = Path('web/guardioes.html')
+          demo_guardians = """
+          <script>
+          (() => {
+            const render = () => {
+              const panel = document.getElementById('panel');
+              const entries = document.getElementById('entries');
+              if (!panel || panel.classList.contains('hidden') || !entries) return;
+              if (entries.dataset.demo === '1') return;
+              if (entries.textContent.includes('Carregando')) return;
+              entries.replaceChildren();
+              for (const [role,person] of [
+                ['Guardião principal','Pessoa convidada (demonstração)'],
+                ['Guardião substituto','Outra pessoa convidada (demonstração)']
+              ]) {
+                const row = document.createElement('div');
+                row.className = 'item';
+                const title = document.createElement('strong');
+                title.textContent = role;
+                const name = document.createElement('p');
+                name.className = 'muted';
+                name.textContent = person;
+                const status = document.createElement('p');
+                status.className = 'status';
+                status.textContent = 'Aguardando aceite · convite ainda não enviado';
+                row.append(title,name,status);
+                entries.append(row);
+              }
+              entries.dataset.demo = '1';
+              const feedback = document.getElementById('feedback');
+              if (feedback) feedback.textContent = '';
+            };
+            setInterval(render, 400);
+          })();
+          </script>
+          """
+          guardians.write_text(guardians.read_text().replace('</body>',demo_guardians+'</body>'))
+          PY
+
       - name: Validar projeto
         script: npm run check && npm test
 
