@@ -91,14 +91,14 @@ workflows:
           python3 - <<'PY'
           from pathlib import Path
           import shutil
-          root = Path.home()/'.maestro'/'tests'
+          roots = [Path.home()/'.maestro'/'tests', Path('build/screenshots'), Path.cwd()]
           dest = Path('build/screenshots')
           dest.mkdir(parents=True, exist_ok=True)
           for name, target in (
               ('ipad-apos-login', 'Legado_Digital_iPad_13_Conversa.png'),
               ('ipad-guardioes', 'Legado_Digital_iPad_13_Guardioes.png'),
           ):
-              candidates = [p for p in root.rglob('*') if p.is_file() and p.stem == name and p.suffix.lower() == '.png']
+              candidates = [p for root in roots if root.exists() for p in root.rglob('*.png') if p.is_file() and (p.stem == name or p.stem.endswith('/'+name))]
               if not candidates:
                   raise SystemExit('Captura Maestro ausente: ' + name)
               src = max(candidates, key=lambda p: p.stat().st_mtime)
