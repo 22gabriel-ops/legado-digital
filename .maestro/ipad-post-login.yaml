@@ -19,10 +19,8 @@ appId: com.gabrielcruz.legadodigital
 - extendedWaitUntil:
     visible: "Conta criada"
     timeout: 45000
-- scrollUntilVisible:
-    element: "Conversar com meu Legado"
-    direction: UP
-    timeout: 30000
+# After login the page starts near the account header; the chat composer is below.
+# Search for the actual input rather than the heading (which contains an emoji).
 - scrollUntilVisible:
     element: "Escreva sua mensagem para o seu Legado..."
     direction: DOWN
