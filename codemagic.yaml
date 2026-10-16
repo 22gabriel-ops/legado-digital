@@ -200,6 +200,21 @@ workflows:
           cp suporte.html web/
           cp -R site web/
 
+      - name: Validar conteúdo real para distribuição
+        script: |
+          python3 - <<'PY'
+          from pathlib import Path
+          index = Path('web/index.html').read_text()
+          guardians = Path('web/guardioes.html').read_text()
+          assert "async function loadChat(){" in index, "Chat real ausente"
+          assert "action:'list'" in index, "Histórico real de conversa não configurado"
+          assert "async function load(){" in guardians, "Guardiões reais ausentes"
+          assert "legacy_guardians?select=" in guardians, "Consulta de guardiões ausente"
+          assert "Pessoa convidada (demonstração)" not in guardians, "Guardião demonstrativo presente na distribuição"
+          assert "Conta de demonstração" not in index, "Conta fictícia presente na distribuição"
+          print("Verificação: interface real incluída, sem substituições do simulador")
+          PY
+
       - name: Validar projeto
         script: npm run check && npm test
 
@@ -211,7 +226,7 @@ workflows:
       - name: Aplicar ícone oficial e atualizar número da compilação
         script: |
           python3 - <<'PY'
-          import json, pathlib, subprocess
+          import json, os, pathlib, subprocess
           source = pathlib.Path('Legado_Digital_AppIcon_1024.png')
           catalog = pathlib.Path('ios/App/App/Assets.xcassets/AppIcon.appiconset')
           config = catalog / 'Contents.json'
@@ -236,11 +251,12 @@ workflows:
           project = pathlib.Path('ios/App/App.xcodeproj/project.pbxproj')
           content = project.read_text()
           import re
-          updated, n = re.subn(r'(CURRENT_PROJECT_VERSION\s*=\s*)\d+(;)', r'\g<1>4\2', content)
+          build_number = max(5, int(os.environ.get('CM_BUILD_NUMBER', '5')))
+          updated, n = re.subn(r'(CURRENT_PROJECT_VERSION\s*=\s*)\d+(;)', lambda m: m.group(1)+str(build_number)+m.group(2), content)
           if n == 0:
               raise SystemExit('CURRENT_PROJECT_VERSION não encontrado')
           project.write_text(updated)
-          print('Número da compilação alterado para 4')
+          print('Número da compilação definido para', build_number)
           PY
 
       - name: Aplicar assinatura Apple
