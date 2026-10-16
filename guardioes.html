@@ -18,7 +18,60 @@
 <label for="role">Função</label><select id="role" required><option value="primary">Guardião principal</option><option value="alternate">Guardião substituto</option></select>
 <label for="full_name">Nome completo</label><input id="full_name" required minlength="2" maxlength="120" autocomplete="off">
 <label for="email">E-mail</label><input id="email" type="email" required maxlength="254" autocomplete="off">
-<label for="phone">WhatsApp com código do país (opcional)</label><input id="phone" type="tel" placeholder="+55 31 99999-9999" maxlength="20" autocomplete="off">
+<label for="guardian-country">País do WhatsApp (opcional)</label><select id="guardian-country" aria-label="País e código telefônico">
+<option value="55" selected>🇧🇷 Brasil (+55)</option>
+<option value="1">🇺🇸 Estados Unidos / Canadá (+1)</option>
+<option value="351">🇵🇹 Portugal (+351)</option>
+<option value="44">🇬🇧 Reino Unido (+44)</option>
+<option value="34">🇪🇸 Espanha (+34)</option>
+<option value="33">🇫🇷 França (+33)</option>
+<option value="49">🇩🇪 Alemanha (+49)</option>
+<option value="39">🇮🇹 Itália (+39)</option>
+<option value="54">🇦🇷 Argentina (+54)</option>
+<option value="52">🇲🇽 México (+52)</option>
+<option value="56">🇨🇱 Chile (+56)</option>
+<option value="57">🇨🇴 Colômbia (+57)</option>
+<option value="51">🇵🇪 Peru (+51)</option>
+<option value="598">🇺🇾 Uruguai (+598)</option>
+<option value="595">🇵🇾 Paraguai (+595)</option>
+<option value="591">🇧🇴 Bolívia (+591)</option>
+<option value="593">🇪🇨 Equador (+593)</option>
+<option value="58">🇻🇪 Venezuela (+58)</option>
+<option value="81">🇯🇵 Japão (+81)</option>
+<option value="86">🇨🇳 China (+86)</option>
+<option value="82">🇰🇷 Coreia do Sul (+82)</option>
+<option value="91">🇮🇳 Índia (+91)</option>
+<option value="61">🇦🇺 Austrália (+61)</option>
+<option value="64">🇳🇿 Nova Zelândia (+64)</option>
+<option value="27">🇿🇦 África do Sul (+27)</option>
+<option value="244">🇦🇴 Angola (+244)</option>
+<option value="258">🇲🇿 Moçambique (+258)</option>
+<option value="238">🇨🇻 Cabo Verde (+238)</option>
+<option value="41">🇨🇭 Suíça (+41)</option>
+<option value="31">🇳🇱 Países Baixos (+31)</option>
+<option value="32">🇧🇪 Bélgica (+32)</option>
+<option value="353">🇮🇪 Irlanda (+353)</option>
+<option value="46">🇸🇪 Suécia (+46)</option>
+<option value="47">🇳🇴 Noruega (+47)</option>
+<option value="45">🇩🇰 Dinamarca (+45)</option>
+<option value="358">🇫🇮 Finlândia (+358)</option>
+<option value="48">🇵🇱 Polônia (+48)</option>
+<option value="43">🇦🇹 Áustria (+43)</option>
+<option value="90">🇹🇷 Turquia (+90)</option>
+<option value="971">🇦🇪 Emirados Árabes (+971)</option>
+<option value="972">🇮🇱 Israel (+972)</option>
+<option value="966">🇸🇦 Arábia Saudita (+966)</option>
+<option value="20">🇪🇬 Egito (+20)</option>
+<option value="212">🇲🇦 Marrocos (+212)</option>
+<option value="234">🇳🇬 Nigéria (+234)</option>
+<option value="254">🇰🇪 Quênia (+254)</option>
+<option value="65">🇸🇬 Singapura (+65)</option>
+<option value="60">🇲🇾 Malásia (+60)</option>
+<option value="62">🇮🇩 Indonésia (+62)</option>
+<option value="63">🇵🇭 Filipinas (+63)</option>
+<option value="66">🇹🇭 Tailândia (+66)</option>
+<option value="84">🇻🇳 Vietnã (+84)</option>
+</select><label for="phone">WhatsApp com DDD / código de área (opcional)</label><input id="phone" type="tel" inputmode="tel" placeholder="31 99999-9999" maxlength="22" autocomplete="off">
 <p class="muted">Informe contatos da pessoa apenas para registro da indicação. Antes de enviar convites, será necessário confirmar que ela concorda em participar.</p>
 <button id="save" type="submit">Salvar indicação</button><button id="cancel" type="button" class="secondary hidden">Cancelar edição</button>
 </form></div></section>
@@ -50,8 +103,27 @@ async function refresh(){
  if(!res.ok)throw Error('Sessão expirada. Entre novamente.');
  saveSession(await res.json());
 }
-function reset(){editing=null;$('guardian-form').reset();$('form-title').textContent='Indicar guardião';$('cancel').classList.add('hidden');$('save').textContent='Salvar indicação'}
+function reset(){editing=null;$('guardian-form').reset();$('guardian-country').value='55';$('form-title').textContent='Indicar guardião';$('cancel').classList.add('hidden');$('save').textContent='Salvar indicação'}
 function el(tag,value,className){const n=document.createElement(tag);if(value!==undefined)n.textContent=value;if(className)n.className=className;return n}
+function setGuardianPhone(saved){
+ const raw=String(saved||'').trim(),digits=raw.replace(/\D/g,'');
+ const country=$('guardian-country');
+ country.value='55';
+ if(!digits){$('phone').value='';return}
+ const codes=Array.from(country.options).map(o=>o.value).sort((a,b)=>b.length-a.length);
+ const code=raw.startsWith('+')?codes.find(c=>digits.startsWith(c)):null;
+ if(code){country.value=code;$('phone').value=digits.slice(code.length)}
+ else{$('phone').value=raw}
+}
+function guardianPhoneValue(){
+ const raw=$('phone').value.trim();
+ if(!raw)return null;
+ const local=raw.replace(/\D/g,'');
+ const code=$('guardian-country').value;
+ const digits=raw.startsWith('+')?local:code+local;
+ if(!/^\d{7,15}$/.test(digits))throw Error('Informe um WhatsApp válido com DDD e código do país (7 a 15 dígitos).');
+ return '+'+digits;
+}
 function draw(){
  const box=$('entries');box.replaceChildren();
  for(const role of ['primary','alternate']){
@@ -62,7 +134,7 @@ function draw(){
    item.append(el('p',g.full_name+' · '+g.email+(g.phone?' · '+g.phone:''),'muted'));
    item.append(el('p',g.status==='pending'?'Aguardando aceite · compartilhe o convite':'Status: '+({accepted:'Aceitou a indicação (sem acesso)',declined:'Recusou a indicação',revoked:'Revogada'}[g.status]||g.status),'status'));
    if(g.status==='pending'){const invite=el('button','Copiar link de convite','secondary');invite.type='button';invite.onclick=async()=>{const link=new URL('./guardioes.html?invite='+encodeURIComponent(g.id),location.href).href;try{await navigator.clipboard.writeText(link);message('Link copiado. Envie você mesmo ao e-mail ou WhatsApp do guardião indicado. Nenhum envio automático foi feito.')}catch{window.prompt('Copie o link para compartilhar:',link)}};item.append(invite)}
-   const edit=el('button','Editar','secondary');edit.type='button';edit.disabled=g.status!=='pending';edit.onclick=()=>{editing=g.id;$('role').value=g.role;$('full_name').value=g.full_name;$('email').value=g.email;$('phone').value=g.phone||'';$('form-title').textContent='Editar indicação';$('cancel').classList.remove('hidden');$('save').textContent='Salvar alterações';$('guardian-form').scrollIntoView({behavior:'smooth'})};
+   const edit=el('button','Editar','secondary');edit.type='button';edit.disabled=g.status!=='pending';edit.onclick=()=>{editing=g.id;$('role').value=g.role;$('full_name').value=g.full_name;$('email').value=g.email;setGuardianPhone(g.phone);$('form-title').textContent='Editar indicação';$('cancel').classList.remove('hidden');$('save').textContent='Salvar alterações';$('guardian-form').scrollIntoView({behavior:'smooth'})};
    const del=el('button','Remover','danger');del.type='button';del.onclick=async()=>{if(!confirm('Remover esta indicação?'))return;del.disabled=true;try{await api('/rest/v1/legacy_guardians?id=eq.'+encodeURIComponent(g.id),{method:'DELETE'});reset();await load();message('Indicação removida.')}catch(e){message(e.message,true)}finally{del.disabled=false}};
    item.append(edit,del);
   }
@@ -73,7 +145,8 @@ async function load(){guardians=await api('/rest/v1/legacy_guardians?select=id,f
 $('cancel').onclick=reset;
 $('guardian-form').onsubmit=async e=>{
  e.preventDefault();
- const role=$('role').value,full_name=$('full_name').value.trim(),email=$('email').value.trim().toLowerCase(),phone=$('phone').value.trim()||null;
+ const role=$('role').value,full_name=$('full_name').value.trim(),email=$('email').value.trim().toLowerCase();
+ let phone;try{phone=guardianPhoneValue()}catch(err){message(err.message,true);return}
  if(full_name.length<2||!email.includes('@')){message('Confira nome e e-mail.',true);return}
  if(guardians.some(g=>g.role===role&&g.id!==editing)){message('Já existe uma indicação para esta função. Edite ou remova a anterior.',true);return}
  const save=$('save');save.disabled=true;
