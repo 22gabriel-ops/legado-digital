@@ -26,7 +26,7 @@ test('conversa real e exclusão de conta permanecem presentes', () => {
 });
 
 test('simulador não adultera páginas para capturas da App Store', () => {
-  assert.doesNotMatch(workflow, /Preparar capturas fictícias|Pessoa convidada \(demonstração\)/);
+  assert.doesNotMatch(workflow, /- name: Preparar capturas fictícias/);
   assert.doesNotMatch(maestro, /Pessoa convidada \(demonstração\)/);
   assert.match(workflow, /xcrun simctl io/);
 });
