@@ -17,12 +17,12 @@ appId: com.gabrielcruz.legadodigital
 # The login submit button sits below the password field; after dismissing the keyboard,
 # scroll to it and tap the button instead of the page heading.
 - scrollUntilVisible:
-    element:
-      id: "auth-submit"
+    element: "Criar conta"
     direction: DOWN
     timeout: 15000
 - tapOn:
-    id: "auth-submit"
+    text: "Entrar"
+    index: 1
 - extendedWaitUntil:
     visible: "Conversar com meu Legado.*"
     timeout: 45000
