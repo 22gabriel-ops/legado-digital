@@ -29,10 +29,6 @@ async function db(path: string, init: RequestInit = {}): Promise<any> {
   const text = await response.text();
   return text ? JSON.parse(text) : null;
 }
-function canReadAndSave(sender: string): boolean {
-  const allowed = env("WHATSAPP_MEMORY_ALLOWED_WA_ID");
-  return Boolean(allowed && sender === allowed);
-}
 function outboundRecipient(sender: string): string {
   const testSender = env("WHATSAPP_TEST_SENDER_WA_ID");
   const testRecipient = env("WHATSAPP_TEST_RECIPIENT");
@@ -65,9 +61,19 @@ async function ownerFullName(owner: string): Promise<string> {
   const fullName = user?.user_metadata?.full_name;
   return typeof fullName === "string" ? fullName.trim().slice(0, 160) : "";
 }
-// A verificacao obrigatoria e ativada SOMENTE por flag, apos o OTP estar pronto.
-// No MVP atual ha um unico titular (LEGACY_OWNER_ID); nao redirecionar
-// mensagens de outros numeros para as memorias desse titular.
+// A Meta pode enviar celulares brasileiros sem o nono dígito.
+// A identidade continua exigindo OTP verificado, opt-in e correspondência única.
+function senderCandidates(sender: string): string[] {
+  const digits = sender.replace(/\D/g, "");
+  if (!/^[1-9]\d{6,14}$/.test(digits)) return [];
+  const candidates = new Set(["+" + digits]);
+  if (digits.startsWith("55") && digits.length === 12) {
+    candidates.add("+" + digits.slice(0, 4) + "9" + digits.slice(4));
+  } else if (digits.startsWith("55") && digits.length === 13 && digits[4] === "9") {
+    candidates.add("+" + digits.slice(0, 4) + digits.slice(5));
+  }
+  return [...candidates];
+}
 async function verifiedOwnerSender(owner: string, sender: string): Promise<boolean> {
   const base = env("SUPABASE_URL");
   const key = env("SUPABASE_SERVICE_ROLE_KEY");
@@ -77,26 +83,22 @@ async function verifiedOwnerSender(owner: string, sender: string): Promise<boole
   if (!userRes.ok) throw new Error("Unable to check owner WhatsApp identity: " + userRes.status);
   const user = await userRes.json();
   const registered = String(user?.user_metadata?.whatsapp_phone || "").replace(/\D/g, "");
-  const incoming = sender.replace(/\D/g, "");
-  if (!registered || registered !== incoming || user?.user_metadata?.whatsapp_opt_in !== true) return false;
-  const verified = await db(
-    "legacy_phone_verifications?select=id&owner_id=eq." + encodeURIComponent(owner) +
-    "&phone_e164=eq." + encodeURIComponent("+" + registered) +
-    "&status=eq.verified&limit=1"
-  );
-  return Array.isArray(verified) && verified.length > 0;
+  if (!registered || !senderCandidates(sender).includes("+" + registered) || user?.user_metadata?.whatsapp_opt_in !== true) return false;
+  const verified = await db("legacy_phone_verifications?select=id&owner_id=eq." + encodeURIComponent(owner) +
+    "&phone_e164=eq." + encodeURIComponent("+" + registered) + "&status=eq.verified&limit=2");
+  return Array.isArray(verified) && verified.length === 1;
 }
-// Um remetente so pode ser roteado ao titular com WhatsApp comprovadamente verificado.
-// Excecao controlada: numero do MVP exclusivamente para o proprietario de teste.
 async function resolveOwner(sender: string): Promise<string | null> {
-  const legacyOwner = env("LEGACY_OWNER_ID");
-  if (legacyOwner && canReadAndSave(sender)) return legacyOwner;
-  const phone = "+" + sender.replace(/\D/g, "");
-  if (!/^\+[1-9]\d{6,14}$/.test(phone)) return null;
-  const verified = await db("legacy_phone_verifications?select=owner_id&phone_e164=eq." +
-    encodeURIComponent(phone) + "&status=eq.verified&limit=2");
-  if (!Array.isArray(verified) || verified.length !== 1) return null;
-  const owner = String(verified[0].owner_id);
+  const candidates = senderCandidates(sender);
+  if (!candidates.length) return null;
+  const found: {owner_id: string; phone_e164: string}[] = [];
+  for (const phone of candidates) {
+    const rows = await db("legacy_phone_verifications?select=owner_id,phone_e164&phone_e164=eq." +
+      encodeURIComponent(phone) + "&status=eq.verified&limit=3");
+    if (Array.isArray(rows)) found.push(...rows);
+  }
+  if (found.length !== 1) return null;
+  const owner = String(found[0].owner_id);
   if (!(await verifiedOwnerSender(owner, sender))) return null;
   return owner;
 }
