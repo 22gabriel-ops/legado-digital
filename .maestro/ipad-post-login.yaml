@@ -12,7 +12,6 @@ appId: com.gabrielcruz.legadodigital
 - tapOn:
     text: "Senha"
 - inputText: ${TEST_PASSWORD}
-- hideKeyboard
 - tapOn:
     text: "Entrar"
     index: 1
