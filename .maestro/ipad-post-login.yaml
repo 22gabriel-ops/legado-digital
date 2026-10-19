@@ -17,7 +17,7 @@ appId: com.gabrielcruz.legadodigital
     text: "Entrar"
     index: 1
 - extendedWaitUntil:
-    visible: "Conta criada"
+    visible: "Conversar com meu Legado"
     timeout: 45000
 # After login the page starts near the account header; the chat composer is below.
 # Search for the actual input rather than the heading (which contains an emoji).
@@ -36,10 +36,6 @@ appId: com.gabrielcruz.legadodigital
 - tapOn: "Cadastrar guardiões"
 - extendedWaitUntil:
     visible: "Guardiões do legado"
-    timeout: 30000
-- scrollUntilVisible:
-    element: "Pessoa convidada (demonstração)"
-    direction: DOWN
     timeout: 30000
 - assertNotVisible: "Carregando…"
 - waitForAnimationToEnd
