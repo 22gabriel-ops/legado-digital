@@ -20,3 +20,21 @@
 7. Não usar screenshots de simulador que ocultem dados alterando o HTML, nem mockar o chat/guardiões.
 
 **Importante:** alterações de interface não comprovam funcionamento dos serviços externos. Não declarar a pendência 2.2 resolvida até passar nos testes ponta a ponta.
+
+
+## Verificações adicionais antes de liberar para produção (19/10/2026)
+- [ ] Confirmar conversa e consentimento no WhatsApp de Gabriel, Lucas e Raphael. Gabriel e Lucas passaram em teste manual; Raphael pendente.
+- [ ] Confirmar isolamento entre titulares: cada usuário vê apenas o próprio perfil e histórico, inclusive com números brasileiros recebidos sem o nono dígito.
+- [ ] Validar que um número não verificado e um número ambíguo não recebem conteúdo privado.
+- [ ] Confirmar que o webhook implantado no Supabase corresponde ao código versionado em `supabase/functions/whatsapp-webhook/index.ts`. O commit no GitHub não atualiza automaticamente a função implantada.
+- [ ] Testar exclusão da conta com dados de conversas, sugestões, guardiões e importações; verificar cascatas, dados órfãos e retenção. O SQL `delete_my_account.sql` não comprova exclusão integral.
+- [ ] Testar fluxo de recuperação de senha, verificação de e-mail, login e logout em iPhone e iPad.
+- [ ] Conferir que não há promessa de assinatura paga, importação integral ou número exclusivo como serviço já disponível.
+- [ ] Confirmar status da revisão Apple antes de enviar nova compilação.
+- [ ] Testar restauração de sessão e erros de rede sem exposição de informações privadas.
+
+## Atenção a importações
+`construir-legado.html` e `importar-legado.html` descrevem importação integral de WhatsApp/ChatGPT como futura. Há um protótipo `importar-whatsapp.html` de seleção manual de trechos, que não deve ser apresentado como importação integral pronta nem usado como prova de integração automática à IA.
+
+## Regra de lançamento
+Não publicar assinaturas, compartilhamento externo do Legado ou número exclusivo antes de validar pagamento, autorização de acesso, custos e isolamento por titular.
