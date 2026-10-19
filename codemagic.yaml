@@ -27,64 +27,6 @@ workflows:
           cp suporte.html web/
           cp -R site web/
 
-      - name: Preparar capturas fictícias sem dados reais
-        script: |
-          python3 - <<'PY'
-          from pathlib import Path
-          import re
-          index = Path('web/index.html')
-          html = index.read_text()
-          # Replace the original history loader BEFORE the app starts.
-          # The simulator never requests actual chat turns for a screenshot.
-          begin = html.index('async function loadChat(){')
-          finish = html.index("$('chat-send').onclick=",begin)
-          demo = """async function loadChat(){
-            const chat = $('chat-messages');
-            chat.replaceChildren();
-            for(const [role,content] of [
-              ['assistant','Olá! Qual lembrança você gostaria de guardar no seu Legado?'],
-              ['user','Gosto de reunir meus amigos e contar histórias.'],
-              ['assistant','Que bom! O que torna esses encontros tão especiais?']
-            ]) addChatBubble(role,content);
-            chatStatus('');
-          }
-          """
-          html = html[:begin] + demo + html[finish:]
-          # Conceal real personal/account fields in simulator screenshots.
-          # Keep the chat and Guardians navigation accessible to Maestro.
-          html = html.replace('</head>',"""<style>
-          #account > .card:not(#legacy-chat-card):not(:has(#open-guardians)):not(:has(#who)) {visibility:hidden!important}
-          #who,#saved-phone-label,#account-phone,#account-consent,#whatsapp-code-status {visibility:hidden!important}
-          </style></head>""",1)
-          index.write_text(html)
-          guardians = Path('web/guardioes.html')
-          original = guardians.read_text()
-          # Static capture-only page: never boot the live guardians JavaScript.
-          # This avoids loading private guardians while rendering App Store images.
-          style = original[original.index('<style>'):original.index('</style>')+len('</style>')]
-          demo_page = """<!doctype html><html lang="pt-BR"><head>
-          <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-          <title>Legado Digital · Guardiões</title>
-          """ + style + """
-          </head><body><main>
-          <a href="./index.html?app=1">← Voltar à minha conta</a>
-          <h1>Guardiões do legado</h1>
-          <p class="muted">Escolha quem poderá cuidar do seu legado no futuro. Você pode indicar uma pessoa principal e uma substituta.</p>
-          <div class="notice"><strong>Importante:</strong> aceitar uma indicação não concede acesso às memórias. A liberação futura exige verificação e autorização separadas.</div>
-          <div class="card"><h2>Minhas indicações</h2>
-          <div class="item"><strong>Guardião principal</strong>
-          <p class="muted">Pessoa convidada (demonstração)</p>
-          <p class="status">Aguardando aceite · convite ainda não enviado</p></div>
-          <div class="item"><strong>Guardião substituto</strong>
-          <p class="muted">Outra pessoa convidada (demonstração)</p>
-          <p class="status">Aguardando aceite · convite ainda não enviado</p></div>
-          </div></main></body></html>"""
-          guardians.write_text(demo_page)
-          assert '<script>' not in guardians.read_text()
-          assert 'Pessoa convidada (demonstração)' in guardians.read_text()
-
-          PY
-
       - name: Validar projeto
         script: npm run check && npm test
 
@@ -104,7 +46,7 @@ workflows:
             -derivedDataPath build/simulator \
             CODE_SIGNING_ALLOWED=NO build
 
-      - name: Capturar tela real no simulador iPad de 13 polegadas
+      - name: Capturar tela inicial real no simulador iPad de 13 polegadas
         script: |
           set -e
           mkdir -p build/screenshots
@@ -138,7 +80,7 @@ workflows:
           curl -Ls "https://get.maestro.mobile.dev" | bash
           export PATH="$HOME/.maestro/bin:$PATH"
           mkdir -p build/screenshots
-          # On failure, preserve the actual screen without exposing login secrets.
+          # On failure, preserve the actual screen; use only a dedicated non-sensitive test account.
           trap 'xcrun simctl io "$UDID" screenshot build/screenshots/ipad-login-falha.png || true' ERR
           maestro --device "$UDID" test \
             -e "TEST_EMAIL=$MAESTRO_TEST_EMAIL" \
@@ -149,7 +91,7 @@ workflows:
           python3 - <<'PY'
           from pathlib import Path
           import shutil
-          roots = [Path.home()/'.maestro'/'tests', Path('build/screenshots'), Path.cwd()]
+          roots = [Path('build/screenshots'), Path.home()/'.maestro'/'tests']
           dest = Path('build/screenshots')
           dest.mkdir(parents=True, exist_ok=True)
           for name, target in (
