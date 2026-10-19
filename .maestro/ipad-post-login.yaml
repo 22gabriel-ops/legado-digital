@@ -13,8 +13,13 @@ appId: com.gabrielcruz.legadodigital
     text: "Senha"
 - inputText: ${TEST_PASSWORD}
 - tapOn:
-    text: "Entrar"
-    index: 0
+    point: "50%,35%"
+# The login submit button sits below the password field; after dismissing the keyboard,
+# scroll to it and tap the button instead of the page heading.
+- scrollUntilVisible:
+    element: "Entrar"
+    direction: DOWN
+    timeout: 15000
 - tapOn:
     text: "Entrar"
     index: 1
