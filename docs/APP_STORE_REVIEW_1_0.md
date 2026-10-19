@@ -38,3 +38,11 @@
 
 ## Regra de lançamento
 Não publicar assinaturas, compartilhamento externo do Legado ou número exclusivo antes de validar pagamento, autorização de acesso, custos e isolamento por titular.
+
+## Correções de autenticação e exclusão preparadas em 19/10/2026
+- Cadastro sem WhatsApp agora permitido no `index.html`; validar em iPhone e iPad, inclusive sem consentimento.
+- Recuperação de senha e confirmação de e-mail usam `https://legadodigitalapp.com.br/index.html?app=1` como `redirect_to`. **Adicionar esse endereço na lista de Redirect URLs permitidas no Supabase Auth → URL Configuration**, caso ainda não esteja cadastrado. Testar links abertos no Safari e dentro do aplicativo.
+- A recuperação de senha é concluída pelo navegador, não por deep link nativo. Não afirmar suporte a retorno automático ao app até implementar e testar Universal Links.
+- `supabase/delete_my_account.sql` foi reforçado para falhar fechado diante de FKs públicas não CASCADE ou colunas `owner_id`/`user_id` sem vínculo direto. **Instalar manualmente no SQL Editor**, revisar erros de dependência e testar com conta descartável. Não testar exclusão na conta real de Gabriel, Lucas ou Raphael.
+- O SQL não garante exclusão de Storage, backups, logs da Meta, fornecedores externos nem tabelas com vínculo indireto; revisar política de retenção e inventário antes de anunciar exclusão integral.
+- Alterações em `index.html` precisam ser incluídas em novo build iOS para valer no aplicativo instalado; alterações no site podem aparecer antes. Evitar enviar nova build enquanto a versão atual estiver em revisão sem necessidade.
