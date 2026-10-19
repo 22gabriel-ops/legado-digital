@@ -80,8 +80,11 @@ workflows:
           curl -Ls "https://get.maestro.mobile.dev" | bash
           export PATH="$HOME/.maestro/bin:$PATH"
           mkdir -p build/screenshots
+          rm -f build/screenshots/ipad-apos-login.png build/screenshots/ipad-guardioes.png
+          rm -f build/screenshots/Legado_Digital_iPad_13_Conversa.png build/screenshots/Legado_Digital_iPad_13_Guardioes.png
           # On failure, preserve the actual screen; use only a dedicated non-sensitive test account.
           trap 'xcrun simctl io "$UDID" screenshot build/screenshots/ipad-login-falha.png || true' ERR
+          touch /tmp/legado_maestro_start
           maestro --device "$UDID" test \
             -e "TEST_EMAIL=$MAESTRO_TEST_EMAIL" \
             -e "TEST_PASSWORD=$MAESTRO_TEST_PASSWORD" \
@@ -91,14 +94,17 @@ workflows:
           python3 - <<'PY'
           from pathlib import Path
           import shutil
+          import time
           roots = [Path('build/screenshots'), Path.home()/'.maestro'/'tests']
           dest = Path('build/screenshots')
           dest.mkdir(parents=True, exist_ok=True)
+          # Only accept screenshots produced during this build step.
+          build_start = Path('/tmp/legado_maestro_start').stat().st_mtime
           for name, target in (
               ('ipad-apos-login', 'Legado_Digital_iPad_13_Conversa.png'),
               ('ipad-guardioes', 'Legado_Digital_iPad_13_Guardioes.png'),
           ):
-              candidates = [p for root in roots if root.exists() for p in root.rglob('*.png') if p.is_file() and (p.stem == name or p.stem.endswith('/'+name))]
+              candidates = [p for root in roots if root.exists() for p in root.rglob('*.png') if p.is_file() and p.stem == name and p.stat().st_mtime >= build_start]
               if not candidates:
                   raise SystemExit('Captura Maestro ausente: ' + name)
               src = max(candidates, key=lambda p: p.stat().st_mtime)
