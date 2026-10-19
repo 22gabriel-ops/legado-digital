@@ -199,8 +199,9 @@ workflows:
           project = pathlib.Path('ios/App/App.xcodeproj/project.pbxproj')
           content = project.read_text()
           import re
-          # Apple already has build 5. CM_BUILD_NUMBER increases per Codemagic workflow run.
-          build_number = max(6, int(os.environ.get('CM_BUILD_NUMBER', '6')))
+          # App Store Connect already received build 7 for version 1.0.
+          # Use a floor above that value; CM_BUILD_NUMBER is per-workflow and may be lower.
+          build_number = max(8, int(os.environ.get('CM_BUILD_NUMBER', '0')) + 8)
           updated, n = re.subn(r'(CURRENT_PROJECT_VERSION\s*=\s*)\d+(;)', lambda m: m.group(1)+str(build_number)+m.group(2), content)
           if n == 0:
               raise SystemExit('CURRENT_PROJECT_VERSION não encontrado')
