@@ -10,6 +10,7 @@ Deno.serve(async req=>{
  if(req.method!=="POST")return reply({error:"Método não permitido"},405);
  const origin=req.headers.get("origin");if(origin && !allowedOrigins.has(origin))return reply({error:"Origem não autorizada"},403,origin);
  const url=env("SUPABASE_URL"),key=env("SUPABASE_SERVICE_ROLE_KEY");
+ let reservedMessageId:string|null=null, reservedOwner:string|null=null, responseSaved=false;
  if(!url||!key||!env("OPENAI_API_KEY"))return reply({error:"Serviço não configurado"},503);
  try{
   const bearer=req.headers.get("authorization")?.match(/^Bearer (.+)$/i)?.[1];if(!bearer)return reply({error:"Entre na sua conta"},401);
@@ -43,12 +44,14 @@ Deno.serve(async req=>{
   const message=String(body.message||"").trim();if(message.length<1||message.length>1600)return reply({error:"Mensagem deve ter entre 1 e 1600 caracteres"},400);
   // A mesma franquia mensal e compartilhada com o webhook do WhatsApp.
   // Reservar no servidor antes da chamada a IA impede contornar o limite pelo site/app.
+  const reservationId="web-"+crypto.randomUUID();
   const {data:quotaRows,error:quotaError}=await admin.rpc("legacy_reserve_interaction",{
-   p_owner:user.id,p_message_id:"web-"+crypto.randomUUID(),p_source:"owner"
+   p_owner:user.id,p_message_id:reservationId,p_source:"owner"
   });
   if(quotaError)throw quotaError; // Fail closed: never call paid AI without successful quota validation.
   const quota=Array.isArray(quotaRows)?quotaRows[0]:quotaRows;
   if(!quota)throw new Error("Quota response missing");
+  if(quota.allowed===true){reservedMessageId=reservationId;reservedOwner=user.id;}
   if(quota.allowed!==true)return reply({
    error:"Seu Legado atingiu o limite de interações deste mês. Suas memórias continuam preservadas. Aguarde a renovação mensal.",
    code:"monthly_limit",usage:{used:quota.used_count,limit:quota.allowance}
@@ -73,8 +76,18 @@ Deno.serve(async req=>{
    admin.from("legacy_chat_turns").insert([{owner_id:user.id,role:"user",content:message},{owner_id:user.id,role:"assistant",content:finalReply}]),
    admin.from("legacy_profiles").upsert({owner_id:user.id,stage:ready?"ready":"discovering",summary:String(parsed.summary||profile?.summary||"").slice(0,4000),speaking_style:String(parsed.style_note||profile?.speaking_style||"").slice(0,1200),exchanges:count,ready_at:ready?(profile?.ready_at||new Date().toISOString()):null,updated_at:new Date().toISOString()})
   ]);if(e1||e2)throw e1||e2;
+  // A conversa foi salva. Não estornar depois deste ponto, mesmo se o envio falhar.
+  responseSaved=true;
   const candidate=String(parsed.suggested_memory||"").trim();
   if(candidate.length>=8&&candidate.length<=500)await admin.from("legacy_memory_suggestions").insert({owner_id:user.id,content:candidate,source:"chat"});
   return reply({reply:finalReply,stage:ready?"ready":"discovering",exchanges:count,memorySuggested:!!candidate,usage:{used:quota.used_count,limit:quota.allowance}});
- }catch(err){console.error("legacy-conversation",err instanceof Error?err.message:String(err));return reply({error:"Não foi possível processar agora"},500)}
+ }catch(err){
+  if(reservedMessageId&&reservedOwner&&!responseSaved){
+   try{const rollbackAdmin=createClient(url,key,{auth:{persistSession:false}});
+    const {error:refundError}=await rollbackAdmin.rpc("legacy_refund_interaction",{p_owner:reservedOwner,p_message_id:reservedMessageId});
+    if(refundError)console.error("Refund failed:",refundError.message);
+   }catch(refundError){console.error("Refund unavailable",refundError instanceof Error?refundError.message:String(refundError));}
+  }
+  console.error("legacy-conversation",err instanceof Error?err.message:String(err));return reply({error:"Não foi possível processar agora"},500)
+ }
 });
