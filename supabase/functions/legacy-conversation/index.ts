@@ -41,6 +41,18 @@ Deno.serve(async req=>{
   }
   if(action!=="message")return reply({error:"Ação desconhecida"},400);
   const message=String(body.message||"").trim();if(message.length<1||message.length>1600)return reply({error:"Mensagem deve ter entre 1 e 1600 caracteres"},400);
+  // A mesma franquia mensal e compartilhada com o webhook do WhatsApp.
+  // Reservar no servidor antes da chamada a IA impede contornar o limite pelo site/app.
+  const {data:quotaRows,error:quotaError}=await admin.rpc("legacy_reserve_interaction",{
+   p_owner:user.id,p_message_id:"web-"+crypto.randomUUID(),p_source:"owner"
+  });
+  if(quotaError)throw quotaError; // Fail closed: never call paid AI without successful quota validation.
+  const quota=Array.isArray(quotaRows)?quotaRows[0]:quotaRows;
+  if(!quota)throw new Error("Quota response missing");
+  if(quota.allowed!==true)return reply({
+   error:"Seu Legado atingiu o limite de interações deste mês. Suas memórias continuam preservadas. Aguarde a renovação mensal.",
+   code:"monthly_limit",usage:{used:quota.used_count,limit:quota.allowance}
+  },429);
   const {data:stored}=await admin.from("legacy_chat_turns").select("role,content").eq("owner_id",user.id).order("created_at",{ascending:false}).limit(22);
   const history=(stored||[]).reverse();
   const {data:profile}=await admin.from("legacy_profiles").select("*").eq("owner_id",user.id).maybeSingle();
@@ -63,6 +75,6 @@ Deno.serve(async req=>{
   ]);if(e1||e2)throw e1||e2;
   const candidate=String(parsed.suggested_memory||"").trim();
   if(candidate.length>=8&&candidate.length<=500)await admin.from("legacy_memory_suggestions").insert({owner_id:user.id,content:candidate,source:"chat"});
-  return reply({reply:finalReply,stage:ready?"ready":"discovering",exchanges:count,memorySuggested:!!candidate});
+  return reply({reply:finalReply,stage:ready?"ready":"discovering",exchanges:count,memorySuggested:!!candidate,usage:{used:quota.used_count,limit:quota.allowance}});
  }catch(err){console.error("legacy-conversation",err instanceof Error?err.message:String(err));return reply({error:"Não foi possível processar agora"},500)}
 });
