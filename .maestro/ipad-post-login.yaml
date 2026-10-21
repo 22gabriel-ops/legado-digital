@@ -32,6 +32,19 @@ appId: com.gabrielcruz.legadodigital
 - assertVisible: "Enviar"
 - waitForAnimationToEnd
 - takeScreenshot: "build/screenshots/ipad-apos-login"
+# Regression test: App Review Guideline 2.1(a), plans link must navigate within app.
+- scrollUntilVisible:
+    element: "Ver os três planos e condições.*"
+    direction: DOWN
+    timeout: 30000
+- tapOn:
+    text: "Ver os três planos e condições.*"
+- extendedWaitUntil:
+    visible: "Escolha seu plano.*"
+    timeout: 15000
+- assertVisible: "Meu Legado Plus"
+- assertVisible: "Meu Legado Exclusivo.*"
+- takeScreenshot: "build/screenshots/ipad-planos"
 - scrollUntilVisible:
     element: "Cadastrar guardiões"
     direction: DOWN
