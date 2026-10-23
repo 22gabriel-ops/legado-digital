@@ -27,6 +27,9 @@ workflows:
           cp suporte.html web/
           cp -R site web/
 
+      - name: Preparar edição iOS gratuita
+        script: python3 scripts/prepare_ios_free.py
+
       - name: Validar projeto
         script: npm run check && npm test
 
@@ -147,6 +150,9 @@ workflows:
           cp exclusao-de-dados.html web/
           cp suporte.html web/
           cp -R site web/
+
+      - name: Preparar edição iOS gratuita
+        script: python3 scripts/prepare_ios_free.py
 
       - name: Validar conteúdo real para distribuição
         script: |
