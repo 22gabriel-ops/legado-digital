@@ -32,11 +32,6 @@ BEGIN
    UPDATE public.legacy_usage_months SET included_used=included_used+1 WHERE owner_id=p_owner AND month_start=v_period;
    v_used:=v_used+1;
    INSERT INTO public.legacy_usage_events(owner_id,message_id,month_start,source,bucket) VALUES(p_owner,p_message_id,v_period,p_source,'included');
- ELSIF false THEN
-   UPDATE public.legacy_credit_balances SET remaining=remaining-1,updated_at=now() WHERE owner_id=p_owner;
-   UPDATE public.legacy_usage_months SET purchased_used=purchased_used+1 WHERE owner_id=p_owner AND month_start=v_period;
-   v_extra:=v_extra-1;
-   INSERT INTO public.legacy_usage_events(owner_id,message_id,month_start,source,bucket) VALUES(p_owner,p_message_id,v_period,p_source,'extra');
  ELSE
    RETURN QUERY SELECT false,v_used,v_limit,v_extra,100,'monthly_limit'::text; RETURN;
  END IF;
