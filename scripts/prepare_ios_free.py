@@ -48,7 +48,7 @@ s=s[:a]+'''async function loadLegacyPlan(){
   const now=new Date();const month=now.toISOString().slice(0,7)+'-01';
   const usage=await authorized('/rest/v1/legacy_usage_months?select=included_used&month_start=eq.'+month+'&limit=1');
   const used=Number(usage?.[0]?.included_used||0);
-  const summary=\`\${used} interações registradas neste mês. Limite gratuito: 100 interações mensais.\`;
+  const summary=used+' interações registradas neste mês. Limite gratuito: 100 interações mensais.';
   $('legacy-usage-status').textContent=summary;
   $('chat-quota').textContent=summary;
  }catch{
