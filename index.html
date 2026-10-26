@@ -36,7 +36,7 @@ button:hover{filter:brightness(1.05)}button.secondary{background:#f5f0e7;color:#
 .auth-logo{display:flex;justify-content:center;margin:0 0 18px}.auth-logo .tree-icon{width:86px;height:86px;color:#ad864e}.password-field{position:relative}.password-field input{padding-right:60px!important}.password-toggle{position:absolute;right:5px;top:50%;transform:translateY(-50%);width:44px;min-height:42px;padding:9px;border-radius:9px;background:transparent;color:#80684a;display:flex;align-items:center;justify-content:center}.password-toggle svg{width:22px;height:22px}.password-toggle:hover{background:#f5efe5;filter:none}.headerrow{display:flex;justify-content:space-between;align-items:center;gap:12px}.headerrow small{overflow-wrap:anywhere}
 .inline{background:none;color:#8a693f;padding:6px;text-decoration:underline;min-height:auto}.checkboxlabel{display:flex;gap:11px;align-items:flex-start;font-size:13px;line-height:1.65;color:#62584f;font-weight:500}.checkboxlabel input{margin-top:4px;accent-color:#a78451}
 @media(max-width:480px){main{padding-top:22px}.hero{padding:30px 24px}.card{padding:25px 22px}.brand-text strong{font-size:22px}.actions button{flex:1}}
-select{width:100%;display:block;min-height:50px;padding:12px 14px;border:1px solid #ddd4c5;border-radius:10px;background:#fff;color:#2b2825;font:inherit;cursor:pointer}select:focus-visible{outline:3px solid #d3b47a;outline-offset:2px}</style>
+select{width:100%;display:block;min-height:50px;padding:12px 14px;border:1px solid #ddd4c5;border-radius:10px;background:#fff;color:#2b2825;font:inherit;cursor:pointer}select:focus-visible{outline:3px solid #d3b47a;outline-offset:2px}#auth .field-error{color:#b3261e;font-size:13px;line-height:1.5;margin:6px 0 12px;font-weight:600}#auth [aria-invalid="true"]{outline:2px solid #b3261e;outline-offset:1px}</style>
 </head><body><main>
 <div class="brand"><svg class="tree-icon" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="29" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M32 51V30M32 40L20 29M32 36L44 25M32 29L25 20M32 33L37 17M20 29l-6-9M44 25l8-8" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" fill="none"/><g fill="currentColor"><ellipse cx="15" cy="17" rx="3" ry="5" transform="rotate(-35 15 17)"/><ellipse cx="23" cy="13" rx="3" ry="5" transform="rotate(-10 23 13)"/><ellipse cx="33" cy="12" rx="3" ry="5"/><ellipse cx="43" cy="13" rx="3" ry="5" transform="rotate(30 43 13)"/><ellipse cx="51" cy="22" rx="3" ry="5" transform="rotate(55 51 22)"/><ellipse cx="13" cy="29" rx="3" ry="5" transform="rotate(-60 13 29)"/><ellipse cx="24" cy="23" rx="3" ry="5" transform="rotate(-20 24 23)"/><ellipse cx="40" cy="23" rx="3" ry="5" transform="rotate(20 40 23)"/><ellipse cx="49" cy="33" rx="3" ry="5" transform="rotate(55 49 33)"/></g></svg><div class="brand-text"><strong>LEGADO</strong><span>DIGITAL</span></div></div>
 <div class="hero"><div class="tag">LEGADO DIGITAL · VERSÃO 1.0</div><h1>Sua personalidade.<br>Seu legado.<br><em>Para sempre.</em></h1><p>Crie sua conta com e-mail e converse com seu Legado dentro do aplicativo. A conexão com WhatsApp é opcional e depende de disponibilidade. Importações de históricos não estão disponíveis nesta versão.</p></div>
@@ -377,10 +377,54 @@ $('welcome-test').onclick=async()=>{
 };
 $('toggle-password').onclick=()=>{const field=$('password');const visible=field.type==='password';field.type=visible?'text':'password';$('toggle-password').setAttribute('aria-pressed',String(visible));$('toggle-password').setAttribute('aria-label',visible?'Ocultar senha':'Mostrar senha');$('toggle-password').title=visible?'Ocultar senha':'Mostrar senha'};
 $('auth-switch').onclick=()=>{signup=!signup;$('auth-title').textContent=signup?'Criar conta':'Entrar';$('auth-submit').textContent=signup?'Cadastrar':'Entrar';$('auth-switch').textContent=signup?'Já tenho conta':'Criar conta';$('signup-whatsapp').classList.toggle('hidden',!signup);setStatus('')};
-$('auth-submit').onclick=async()=>{const email=$('email').value.trim(),password=$('password').value;if(!email||!password){setStatus('Informe e-mail e senha.',true);return}if(password.length<8){setStatus('Use uma senha com ao menos 8 caracteres.',true);return}busy('auth-submit',true);
-try{if(signup){const fullName=$('full-name').value.trim().replace(/\s+/g,' ');if(fullName.length<3||fullName.length>120||fullName.split(' ').length<2){setStatus('Informe seu nome completo (nome e sobrenome).',true);return}const local=$('phone').value.replace(/\D/g,'');const phone=$('country').value+local;if(local && !/^\d{7,15}$/.test(phone)){setStatus('Informe um número de WhatsApp válido com código de área.',true);return}if(local && !$('whatsapp-consent').checked){setStatus('Autorize o contato pelo WhatsApp ou deixe o campo de telefone vazio.',true);return}const metadata={full_name:fullName,whatsapp_opt_in:!!local};if(local)metadata.whatsapp_phone=phone;await api('/auth/v1/signup?redirect_to='+encodeURIComponent(AUTH_REDIRECT),{method:'POST',body:{email,password,data:metadata}});setStatus('Cadastro solicitado. Confirme seu e-mail. O envio automático pelo WhatsApp ainda está em implantação.');signup=false;$('signup-whatsapp').classList.add('hidden');$('auth-title').textContent='Entrar';$('auth-submit').textContent='Entrar';$('auth-switch').textContent='Criar conta'}
-else{const s=await api('/auth/v1/token?grant_type=password',{method:'POST',body:{email,password}});setLoggedIn(s);setStatus('Login realizado.')}
-}catch(e){setStatus('Não foi possível autenticar: '+e.message,true)}finally{busy('auth-submit',false)}};
+function clearAuthErrors(){
+ for(const el of document.querySelectorAll('#auth .field-error'))el.remove();
+ for(const el of document.querySelectorAll('#auth [aria-invalid="true"]')){el.removeAttribute('aria-invalid');el.removeAttribute('aria-describedby');el.style.borderColor='';}
+}
+function authFieldError(id,message){
+ const input=$(id);if(!input)return;
+ input.setAttribute('aria-invalid','true');input.style.borderColor='#b3261e';
+ const error=document.createElement('p');error.className='field-error';error.id=id+'-error';error.setAttribute('role','alert');error.textContent=message;
+ input.setAttribute('aria-describedby',error.id);
+ const anchor=id==='password'?input.closest('.password-field'):input;
+ anchor.insertAdjacentElement('afterend',error);
+ setStatus('Confira o campo destacado e tente novamente.',true);
+ input.scrollIntoView({behavior:'smooth',block:'center'});input.focus({preventScroll:true});
+}
+for(const id of ['email','password','full-name','phone','whatsapp-consent']){
+ $(id).addEventListener('input',()=>{if($(id).getAttribute('aria-invalid')==='true')clearAuthErrors()});
+ $(id).addEventListener('change',()=>{if($(id).getAttribute('aria-invalid')==='true')clearAuthErrors()});
+}
+$('auth-submit').onclick=async()=>{
+ clearAuthErrors();
+ const email=$('email').value.trim(),password=$('password').value;
+ if(!email){authFieldError('email','Informe seu endereço de e-mail.');return}
+ if(!$('email').checkValidity()){authFieldError('email','Digite um endereço de e-mail válido.');return}
+ if(!password){authFieldError('password','Informe sua senha.');return}
+ if(password.length<8){authFieldError('password','Use uma senha com pelo menos 8 caracteres.');return}
+ let fullName='',local='',phone='';
+ if(signup){
+  fullName=$('full-name').value.trim().replace(/\\s+/g,' ');
+  if(fullName.length<3||fullName.length>120||fullName.split(' ').length<2){authFieldError('full-name','Informe nome e sobrenome (exemplo: Vitor Silva).');return}
+  local=$('phone').value.replace(/\\D/g,'');phone=$('country').value+local;
+  if(local&&!/^\\d{7,15}$/.test(phone)){authFieldError('phone','Confira o número do WhatsApp com DDD/código de área.');return}
+  if(local&&!$('whatsapp-consent').checked){authFieldError('whatsapp-consent','Autorize o contato pelo WhatsApp ou deixe o número em branco.');return}
+ }
+ busy('auth-submit',true);
+ try{
+  if(signup){
+   const metadata={full_name:fullName,whatsapp_opt_in:!!local};
+   if(local)metadata.whatsapp_phone=phone;
+   await api('/auth/v1/signup?redirect_to='+encodeURIComponent(AUTH_REDIRECT),{method:'POST',body:{email,password,data:metadata}});
+   setStatus('Cadastro solicitado! Verifique seu e-mail e confirme sua conta. Confira também a caixa de spam.');
+   $('status').scrollIntoView({behavior:'smooth',block:'center'});
+   signup=false;$('signup-whatsapp').classList.add('hidden');$('auth-title').textContent='Entrar';$('auth-submit').textContent='Entrar';$('auth-switch').textContent='Criar conta';
+  }else{const result=await api('/auth/v1/token?grant_type=password',{method:'POST',body:{email,password}});setLoggedIn(result);setStatus('Login realizado.')}
+ }catch(e){
+  setStatus('Não foi possível concluir: '+e.message,true);
+  $('status').scrollIntoView({behavior:'smooth',block:'center'});
+ }finally{busy('auth-submit',false)}
+};
 $('forgot').onclick=async()=>{const email=$('email').value.trim();if(!email){setStatus('Digite seu e-mail antes de recuperar a senha.',true);return}try{await api('/auth/v1/recover?redirect_to='+encodeURIComponent(AUTH_REDIRECT),{method:'POST',body:{email}});setStatus('Se o endereço estiver cadastrado, você receberá um e-mail de recuperação. Abra o link para definir a nova senha no navegador.')}catch(e){setStatus(e.message,true)}};
 $('update-password').onclick=async()=>{const password=$('new-password').value,confirmPassword=$('confirm-password').value;if(password.length<8){setStatus('A senha deve ter pelo menos 8 caracteres.',true);return}if(password!==confirmPassword){setStatus('As senhas não coincidem.',true);return}busy('update-password',true);try{await authorized('/auth/v1/user',{method:'PUT',body:{password}});$('new-password').value='';$('confirm-password').value='';$('reset').classList.add('hidden');setLoggedIn(null);setStatus('Senha alterada. Entre novamente com sua nova senha.')}catch(e){setStatus('Não foi possível alterar a senha: '+e.message,true)}finally{busy('update-password',false)}};
 $('logout').onclick=async()=>{try{await authorized('/auth/v1/logout',{method:'POST'})}catch{}setLoggedIn(null);setStatus('Sessão encerrada.')};
