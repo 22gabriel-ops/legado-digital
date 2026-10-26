@@ -210,11 +210,40 @@ const setStatus=(message,error=false)=>{const el=$('status');el.textContent=mess
 function readSession(){try{return JSON.parse(localStorage.getItem(STORE)||'null')}catch{return null}}
 function keepSession(s){session=s;try{if(s)localStorage.setItem(STORE,JSON.stringify(s));else localStorage.removeItem(STORE)}catch{}}
 const baseHeaders=()=>({'apikey':KEY,'Content-Type':'application/json'});
+function mensagemEmPortugues(valor){
+ const original=String(valor??'').trim();
+ const texto=original.toLowerCase();
+ if(!texto)return 'Não foi possível concluir a operação. Tente novamente.';
+ const regras=[
+  [/email not confirmed|email.*not.*verified|email.*not.*confirmed/, 'Seu e-mail ainda não foi confirmado. Abra a mensagem de confirmação na sua caixa de entrada (ou spam) e clique no link antes de entrar.'],
+  [/invalid login credentials|invalid credentials|invalid email or password/, 'E-mail ou senha incorretos. Confira os dados e tente novamente.'],
+  [/email.*already registered|user already registered|already been registered|already exists/, 'Este e-mail já possui uma conta. Entre com sua senha ou use “Esqueci a senha”.'],
+  [/password should be at least|password.*too short|weak_password|password.*minimum/, 'A senha é muito curta. Use pelo menos 8 caracteres.'],
+  [/password.*weak|password.*pwned/, 'Escolha uma senha mais segura, que não tenha sido exposta em vazamentos.'],
+  [/email rate limit exceeded|over_email_send_rate_limit|rate limit.*email/, 'Você solicitou muitos e-mails em pouco tempo. Aguarde alguns minutos antes de tentar novamente.'],
+  [/over_request_rate_limit|too many requests|rate limit exceeded|429/, 'Muitas tentativas seguidas. Aguarde alguns minutos e tente novamente.'],
+  [/signup is disabled|signups not allowed|signups_disabled/, 'Novos cadastros estão temporariamente indisponíveis. Tente novamente mais tarde.'],
+  [/email address.*invalid|invalid email|email_address_invalid/, 'O endereço de e-mail informado não é válido.'],
+  [/otp expired|token has expired|token expired|expired.*token|invalid.*otp|otp.*invalid/, 'O código ou link de confirmação expirou ou é inválido. Solicite um novo.'],
+  [/invalid refresh token|refresh token not found|session.*expired|jwt expired|invalid jwt/, 'Sua sessão expirou. Entre novamente na sua conta.'],
+  [/networkerror|failed to fetch|network request failed|load failed/, 'Não foi possível conectar ao servidor. Verifique sua internet e tente novamente.'],
+  [/monthly_limit/, 'Você atingiu o limite mensal de interações do seu plano. As mensagens serão renovadas no próximo mês.'],
+  [/shared_plan_inactive/, 'O compartilhamento pelo WhatsApp exclusivo ainda não está disponível para este plano.'],
+  [/user not found/, 'Não foi possível localizar a conta informada. Confira o e-mail.'],
+  [/forbidden|not authorized|unauthorized|permission denied|42501/, 'Você não tem permissão para realizar esta ação. Entre novamente ou contate o suporte.'],
+  [/internal server error|database error|unexpected failure|server error/, 'O serviço está temporariamente indisponível. Tente novamente mais tarde.']
+ ];
+ for(const [padrao,mensagem] of regras)if(padrao.test(texto))return mensagem;
+ // Mensagens próprias do aplicativo já estão em português; mensagens desconhecidas do servidor não devem vazar em inglês.
+ if(/[a-z]/i.test(original)&&!/[áàâãéêíóôõúç]/i.test(original) && /\b(error|invalid|failed|not|unable|missing|denied|expired|unexpected|limit|token|user|email|password|request|server)\b/i.test(original))
+   return 'Não foi possível concluir a solicitação. Tente novamente. Se o problema continuar, entre em contato com o suporte.';
+ return original;
+}
 async function api(endpoint,{method='GET',body,token,headers={}}={}) {
  const h={...baseHeaders(),...headers};if(token)h.Authorization='Bearer '+token;
  let response;try{response=await fetch(BASE+endpoint,{method,headers:h,body:body===undefined?undefined:JSON.stringify(body)})}catch{throw Error('Sem conexão. Verifique sua internet.')}
  let data=null;const raw=await response.text();try{data=raw?JSON.parse(raw):null}catch{data=raw}
- if(!response.ok)throw Error(typeof data==='object'?(data.msg||data.error_description||data.message||data.error||'Erro do servidor'):String(data));
+ if(!response.ok){const detalhe=typeof data==='object'&&data!==null?(data.msg||data.error_description||data.message||data.error||data.code||'Erro do servidor'):String(data);throw Error(mensagemEmPortugues(detalhe));}
  return data;
 }
 async function refreshSession(){
