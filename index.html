@@ -404,10 +404,10 @@ $('auth-submit').onclick=async()=>{
  if(password.length<8){authFieldError('password','Use uma senha com pelo menos 8 caracteres.');return}
  let fullName='',local='',phone='';
  if(signup){
-  fullName=$('full-name').value.trim().replace(/\\s+/g,' ');
+  fullName=$('full-name').value.trim().replace(/\s+/g,' ');
   if(fullName.length<3||fullName.length>120||fullName.split(' ').length<2){authFieldError('full-name','Informe nome e sobrenome (exemplo: Vitor Silva).');return}
-  local=$('phone').value.replace(/\\D/g,'');phone=$('country').value+local;
-  if(local&&!/^\\d{7,15}$/.test(phone)){authFieldError('phone','Confira o número do WhatsApp com DDD/código de área.');return}
+  local=$('phone').value.replace(/\D/g,'');phone=$('country').value+local;
+  if(local&&!/^\d{7,15}$/.test(phone)){authFieldError('phone','Confira o número do WhatsApp com DDD/código de área.');return}
   if(local&&!$('whatsapp-consent').checked){authFieldError('whatsapp-consent','Autorize o contato pelo WhatsApp ou deixe o número em branco.');return}
  }
  busy('auth-submit',true);
