@@ -24,7 +24,7 @@ a=s.index(start);b=s.index(end,a)
 s=s[:a]+'''<div class="card" id="subscription-card">
 <h2>Meu Legado gratuito 🌳</h2>
 <p>Crie seu Legado, converse com a IA e preserve suas memórias gratuitamente.</p>
-<p class="muted">São 100 interações mensais incluídas, sem cartão, assinatura ou compras dentro do aplicativo.</p>
+<p class="muted">São 10 interações mensais incluídas, sem cartão, assinatura ou compras dentro do aplicativo.</p>
 </div>
 '''+s[b:]
 start='<div class="card"><h2>Minhas interações 🌳</h2>'
@@ -32,7 +32,7 @@ end='<div class="card"><h2>Guardiões do meu legado</h2>'
 if s.count(start)!=1 or s.count(end)!=1: raise SystemExit("Usage boundaries not unique")
 a=s.index(start);b=s.index(end,a)
 s=s[:a]+'''<div class="card"><h2>Minhas interações 🌳</h2>
-<p>Você tem até <strong>100 interações gratuitas por mês</strong>. A franquia renova mensalmente, sem acumular saldo.</p>
+<p>Você tem até <strong>10 interações gratuitas por mês</strong>. A franquia renova mensalmente, sem acumular saldo.</p>
 <p>Uma interação corresponde a uma mensagem enviada e à resposta do Legado.</p>
 <p id="legacy-usage-status" class="muted" role="status">Consultando consumo mensal...</p>
 </div>
@@ -43,12 +43,12 @@ if s.count(start)!=1 or s.count(end)!=1: raise SystemExit("Plan routine boundari
 a=s.index(start);b=s.index(end,a)
 s=s[:a]+'''async function loadLegacyPlan(){
  $('legacy-plan-label').textContent='Grátis — R$ 0/mês';
- $('legacy-plan-desc').textContent='100 interações mensais gratuitas, renovadas automaticamente.';
+ $('legacy-plan-desc').textContent='10 interações mensais gratuitas, renovadas automaticamente.';
  try{
   const now=new Date();const month=now.toISOString().slice(0,7)+'-01';
   const usage=await authorized('/rest/v1/legacy_usage_months?select=included_used&month_start=eq.'+month+'&limit=1');
   const used=Number(usage?.[0]?.included_used||0);
-  const summary=used+' interações registradas neste mês. Limite gratuito: 100 interações mensais.';
+  const summary=used+' interações registradas neste mês. Limite gratuito: 10 interações mensais.';
   $('legacy-usage-status').textContent=summary;
   $('chat-quota').textContent=summary;
  }catch{
