@@ -183,7 +183,7 @@ async function processMessage(msg: any): Promise<void> {
   const owner = await resolveOwner(sender);
   // Para a funcao em modo seguro: nunca compartilhar memoria de um titular com numero desconhecido.
   if (!owner) {
-    await sendWhatsApp(sender, "Para começar seu Legado, confirme seu WhatsApp no aplicativo Legado Digital. Seus dados e memórias permanecem privados.");
+    await sendWhatsApp(sender, "Olá! 🌳 Para conversar com seu Legado, primeiro crie sua conta gratuitamente e confirme seu número de WhatsApp.\n\nCadastre-se aqui: https://legadodigitalapp.com.br/?app=1\n\nDepois de concluir a confirmação, volte aqui e envie uma mensagem. Suas memórias são privadas e protegidas.");
     return;
   }
   if (env("WHATSAPP_REQUIRE_VERIFICATION") === "true" && !(await verifiedOwnerSender(owner, sender))) return;
