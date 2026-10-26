@@ -104,7 +104,7 @@ select{width:100%;display:block;min-height:50px;padding:12px 14px;border:1px sol
 <label class="checkboxlabel"><input id="whatsapp-consent" type="checkbox">Autorizo o Legado Digital a me enviar mensagens pelo WhatsApp para iniciar a entrevista, responder às minhas mensagens e informar sobre os planos. Posso pedir para parar quando quiser.</label>
 <p class="muted">Seu número será usado para receber a apresentação e a entrevista. O primeiro envio depende da configuração da Meta.</p></div>
 <div class="actions"><button id="auth-submit">Entrar</button><button id="auth-switch" class="secondary">Criar conta</button><button id="forgot" class="inline">Esqueci a senha</button></div>
-<p class="muted">Ao se cadastrar, confirme seu e-mail. Nenhum pagamento será cobrado durante o cadastro.</p></section>
+<p class="muted">Ao se cadastrar, confirme seu e-mail. Nenhum pagamento será cobrado durante o cadastro.</p><p class="muted" style="font-size:11px" id="signup-version">Cadastro web · versão 26.10.26b</p></section>
 <section id="reset" class="card hidden"><h2>Definir nova senha</h2><p class="muted">Escolha uma nova senha para sua conta.</p><label for="new-password">Nova senha</label><input id="new-password" type="password" autocomplete="new-password" minlength="8"><label for="confirm-password">Confirmar nova senha</label><input id="confirm-password" type="password" autocomplete="new-password" minlength="8"><div class="actions"><button id="update-password">Salvar nova senha</button></div></section>
 <section id="account" class="hidden">
 <div class="card"><div class="headerrow"><div><h2>Conta criada</h2><small id="who" class="muted"></small></div><button class="secondary" id="logout">Sair</button></div>
@@ -407,7 +407,7 @@ $('auth-submit').onclick=async()=>{
   fullName=$('full-name').value.trim().replace(/\s+/g,' ');
   if(fullName.length<3||fullName.length>120||fullName.split(' ').length<2){authFieldError('full-name','Informe nome e sobrenome (exemplo: Vitor Silva).');return}
   local=$('phone').value.replace(/\D/g,'');phone=$('country').value+local;
-  if(local&&!/^\d{7,15}$/.test(phone)){authFieldError('phone','Confira o número do WhatsApp com DDD/código de área.');return}
+  if(local&&(phone.length<8||phone.length>15||Array.from(phone).some(ch=>ch<'0'||ch>'9'))){authFieldError('phone','Confira o WhatsApp: informe DDD e número, sem o código do país (ele já está selecionado acima).');return}
   if(local&&!$('whatsapp-consent').checked){authFieldError('whatsapp-consent','Autorize o contato pelo WhatsApp ou deixe o número em branco.');return}
  }
  busy('auth-submit',true);
