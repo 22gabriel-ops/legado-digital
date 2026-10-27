@@ -32,19 +32,20 @@ appId: com.gabrielcruz.legadodigital
 - assertVisible: "Enviar"
 - waitForAnimationToEnd
 - takeScreenshot: "build/screenshots/ipad-apos-login"
-# Regression test: App Review Guideline 2.1(a), plans link must navigate within app.
+# App Review 3.1.1: iOS edition must offer only the free monthly quota.
 - scrollUntilVisible:
-    element: "Ver os três planos e condições.*"
+    element: "Entenda o limite gratuito.*"
     direction: DOWN
     timeout: 30000
 - tapOn:
-    text: "Ver os três planos e condições.*"
+    text: "Entenda o limite gratuito.*"
 - extendedWaitUntil:
-    visible: "Escolha seu plano.*"
+    visible: "Meu Legado gratuito.*"
     timeout: 15000
-- assertVisible: "Meu Legado Plus"
-- assertVisible: "Meu Legado Exclusivo.*"
-- takeScreenshot: "build/screenshots/ipad-planos"
+- assertVisible: "10 interações mensais incluídas.*"
+- assertNotVisible: "Meu Legado Plus"
+- assertNotVisible: "Meu Legado Exclusivo.*"
+- takeScreenshot: "build/screenshots/ipad-gratuito"
 - scrollUntilVisible:
     element: "Cadastrar guardiões"
     direction: DOWN
