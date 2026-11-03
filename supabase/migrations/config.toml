@@ -1,0 +1,5 @@
+[functions.apple-subscription]
+verify_jwt = false # Authenticated inside handler with Supabase auth.getUser.
+
+[functions.apple-notifications]
+verify_jwt = false # Public endpoint; verifies Apple's signed notification and API status.
