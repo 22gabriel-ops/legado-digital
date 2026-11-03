@@ -267,7 +267,7 @@ workflows:
           cp -R site web/
 
       - name: Preparar integração Apple para testes
-        script: node scripts/prepare_apple_test.mjs
+        script: node scripts/prepare_apple_build.mjs
 
       - name: Validar conteúdo real para distribuição
         script: |
