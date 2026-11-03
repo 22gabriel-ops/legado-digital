@@ -1,0 +1,1 @@
+{"name":"@legado/apple-billing","version":"1.0.0","main":"index.js","files":["ios","LegadoAppleBilling.podspec","index.js"],"capacitor":{"ios":{"src":"ios"}},"peerDependencies":{"@capacitor/core":"^7.4.0"}}
