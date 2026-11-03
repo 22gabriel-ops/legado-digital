@@ -9,11 +9,13 @@
     "check": "node -e \"const fs=require('node:fs'); for(const f of ['index.html','manifest.webmanifest','sw.js','icon-192.png','icon-512.png','capacitor.config.json']) { if(!fs.existsSync(f)) throw new Error('Arquivo ausente: '+f); } console.log('Arquivos essenciais presentes')\"",
     "ios:add": "npx cap add ios",
     "ios:sync": "npx cap sync ios",
-    "ios:open": "npx cap open ios"
+    "ios:open": "npx cap open ios",
+    "test:apple-server": "deno test --allow-read --allow-env scripts/apple-server.deno.mjs"
   },
   "dependencies": {
     "@capacitor/core": "^7.4.0",
-    "@capacitor/ios": "^7.4.0"
+    "@capacitor/ios": "^7.4.0",
+    "@legado/apple-billing": "file:plugins/apple-billing"
   },
   "devDependencies": {
     "@capacitor/cli": "^7.4.0"

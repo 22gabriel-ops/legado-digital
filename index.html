@@ -1,6 +1,8 @@
 <!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <script>
+window.LEGACY_APPLE_BILLING_READY = false; // Enabled only in the dedicated test build.
+
 /* Redireciona apenas a pagina inicial do dominio comercial.
    O app iOS e os links de autenticacao continuam intactos. */
 if (["legadodigitalapp.com.br", "www.legadodigitalapp.com.br"].includes(location.hostname)
@@ -187,11 +189,11 @@ select{width:100%;display:block;min-height:50px;padding:12px 14px;border:1px sol
 <p class="muted">Seu Legado continua com você. Escolha a franquia mensal ideal para suas conversas.</p>
 <div style="display:grid;gap:12px">
 <div style="border:1px solid #e8e0d4;border-radius:14px;padding:17px;background:#fff"><strong>Grátis · R$ 0</strong><p class="muted">10 interações mensais, sem cartão. Suas memórias continuam preservadas.</p><span id="plan-free-indicator" class="muted">Plano inicial</span></div>
-<div style="border:2px solid #b28b54;border-radius:14px;padding:17px;background:#fffaf2"><strong style="font-size:19px">Meu Legado Plus</strong><p style="font:400 29px Georgia,serif;margin:10px 0">R$ 19,90 <span style="font:13px Inter,Arial,sans-serif;color:#756b60">/ mês</span></p><p>100 interações por mês para desenvolver e conversar com seu Legado.</p><p class="muted">Franquia compartilhada entre aplicativo, site e WhatsApp. Renovação automática mensal, sem acúmulo de interações.</p><button type="button" id="subscribe-plus" disabled>Assinatura em preparação</button><p class="muted" id="subscription-feedback" role="status">A compra pela Apple ficará disponível após a integração e aprovação da assinatura.</p></div>
+<div style="border:2px solid #b28b54;border-radius:14px;padding:17px;background:#fffaf2"><strong style="font-size:19px">Meu Legado Plus</strong><p style="font:400 29px Georgia,serif;margin:10px 0">R$ 19,90 <span style="font:13px Inter,Arial,sans-serif;color:#756b60">/ mês</span></p><p>100 interações por mês para desenvolver e conversar com seu Legado.</p><p class="muted">Franquia compartilhada entre aplicativo, site e WhatsApp. Renovação automática mensal, sem acúmulo de interações.</p><button type="button" id="subscribe-plus" disabled>Assinatura em preparação</button><p class="muted" id="subscription-feedback" role="status">A assinatura será feita exclusivamente no aplicativo para iPhone ou iPad, pela App Store. A compra ainda está em preparação.</p></div>
 </div>
 <div style="border:1px solid #e8e0d4;border-radius:14px;padding:17px;background:#fff"><strong>Meu Legado Completo · R$ 99,90/mês</strong><p class="muted">Inclui os recursos do Plus e prevê um número próprio de WhatsApp para compartilhar seu Legado com pessoas autorizadas. Recurso em preparação, sujeito à disponibilidade. 100 interações mensais compartilhadas entre os canais e convidados autorizados, sujeitas à disponibilidade do recurso.</p><span class="muted">Ainda não disponível para assinatura</span></div>
 <div class="actions"><button type="button" class="secondary" id="restore-purchases" disabled>Restaurar compras (em preparação)</button></div>
-<p class="muted">A assinatura poderá ser cancelada nas configurações de Assinaturas do seu ID Apple. Nenhuma cobrança será realizada nesta versão. <a href="./privacidade.html">Privacidade</a>.</p>
+<p class="muted">Pagamento e cancelamento exclusivamente pela sua conta Apple. Site e WhatsApp não recebem pagamentos. <a href="./privacidade.html">Privacidade</a> · <a href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/">Termos de uso</a>.</p>
 </div>
 <div class="card"><h2>Minhas interações 🌳</h2><p>Seu plano Grátis prevê <strong>10 interações por mês</strong>. O Plus prevê <strong>100 interações por mês</strong> por R$ 19,90/mês.</p><p>Uma interação corresponde a uma mensagem enviada e à resposta do Legado. As franquias renovam a cada mês, sem acumular saldo. O consumo é contabilizado pelo servidor e compartilhado entre WhatsApp, site e aplicativo. Ao atingir o limite, novas interações de IA ficam bloqueadas até a renovação mensal ou a disponibilização de créditos adicionais.</p><p id="legacy-usage-status" class="muted" role="status">Consultando consumo mensal...</p><p class="muted">O bloqueio automático da franquia está ativo. As assinaturas pagas ainda estão em preparação e não há cobrança ativa nesta versão.</p></div>
 <div class="card"><h2>Meu número exclusivo</h2><p>No Completo (R$ 99,90/mês), o seu Legado poderá ter um número próprio para conversar com familiares e amigos autorizados. Recurso em implantação e sujeito a disponibilidade. A franquia para convidados ainda será definida.</p></div>
@@ -378,11 +380,51 @@ $('chat-send').onclick=async()=>{
 };
 $('chat-input').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();if(!$('chat-send').disabled)$('chat-send').click()}});
 
+
+// Purchases are available only through the native StoreKit bridge.
+const appleNative=window.Capacitor?.getPlatform?.()==='ios' && window.Capacitor?.isPluginAvailable?.('LegacyStoreKit');
+const appleStore=appleNative?window.Capacitor.registerPlugin('LegacyStoreKit'):null;
+let billingBusy=false, billingInitialized=false;
+async function verifyApplePurchase(item){
+ const result=await authorized('/functions/v1/apple-subscription',{method:'POST',body:item});
+ if(!result.verified)throw Error('A compra ainda não foi validada.');
+ await appleStore.finish({transactionId:item.transactionId});
+ await loadLegacyPlan();
+ $('subscription-feedback').textContent=result.environment==='Sandbox'?'Compra de teste validada pela Apple. Nenhuma cobrança real; a franquia de produção permanece inalterada.':result.active?'Assinatura confirmada. Seu plano foi atualizado.':'A assinatura foi consultada e não está ativa.';
+}
+async function syncApplePurchases(restore=false){
+ const data=await appleStore[restore?'restore':'pending']();
+ if(!data.transactions?.length){if(restore)$('subscription-feedback').textContent='Nenhuma assinatura ativa encontrada nesta conta Apple.';return;}
+ for(const item of data.transactions)await verifyApplePurchase(item);
+}
+async function setupAppleBilling(){
+ if(!window.LEGACY_APPLE_BILLING_READY||!appleStore||billingInitialized)return;
+ billingInitialized=true;
+ try{
+  const {products}=await appleStore.products();
+  if(!products?.length)throw Error('Plano indisponível na App Store.');
+  const buy=$('subscribe-plus'),restore=$('restore-purchases');
+  buy.disabled=false;buy.textContent='Assinar Plus por '+products[0].price+'/mês';
+  restore.disabled=false;restore.textContent='Restaurar compras';
+  const execute=async(fn)=>{if(billingBusy)return;billingBusy=true;buy.disabled=restore.disabled=true;try{await fn()}catch(e){$('subscription-feedback').textContent=e.message||'Não foi possível confirmar a compra. Use Restaurar compras para tentar novamente.'}finally{billingBusy=false;buy.disabled=restore.disabled=false}};
+  buy.onclick=()=>execute(async()=>{
+   if(!session?.user?.id)throw Error('Entre na sua conta antes de assinar.');
+   const result=await appleStore.purchase({owner:session.user.id});
+   if(result.status==='purchased')await verifyApplePurchase({transactionId:result.transactionId,environment:result.environment});
+   else $('subscription-feedback').textContent=result.status==='pending'?'Aguardando aprovação da compra pela Apple.':'Compra cancelada. Nenhuma assinatura foi ativada.';
+  });
+  restore.onclick=()=>execute(()=>syncApplePurchases(true));
+  await appleStore.addListener('transaction',()=>execute(()=>syncApplePurchases()));
+  $('subscription-feedback').textContent='Pagamento pela App Store. A assinatura renova automaticamente até o cancelamento na sua conta Apple.';
+  await execute(()=>syncApplePurchases());
+ }catch(e){billingInitialized=false;$('subscription-feedback').textContent=e.message||'App Store indisponível.';}
+}
+
 function setLoggedIn(s){
  keepSession(s);const logged=!!s?.access_token;
  $('auth').classList.toggle('hidden',logged);$('account').classList.toggle('hidden',!logged);
  $('who').textContent=s?.user?.email||'';
- if(logged){displaySavedPhone(s.user);void loadPhoneVerification();void loadLegacyPlan();void loadChat();}
+ if(logged){displaySavedPhone(s.user);void loadPhoneVerification();void loadLegacyPlan();void loadChat();void setupAppleBilling();}
 }
 // Importacoes sao acessadas pelo link da area de conta.
 $('open-guardians').onclick=()=>{location.href='./guardioes.html'};
