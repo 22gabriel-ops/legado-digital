@@ -383,7 +383,11 @@ $('chat-input').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){
 
 // Purchases are available only through the native StoreKit bridge.
 const appleNative=window.Capacitor?.getPlatform?.()==='ios' && window.Capacitor?.isPluginAvailable?.('LegacyStoreKit');
-const appleStore=appleNative?window.Capacitor.registerPlugin('LegacyStoreKit'):null;
+let appleStore=null;
+try{
+ // Plain HTML builds use Capacitor's injected native proxy without core's JS runtime.
+ if(appleNative)appleStore=window.Capacitor.Plugins?.LegacyStoreKit||window.Capacitor.registerPlugin?.('LegacyStoreKit')||null;
+}catch{ /* An unavailable purchase bridge must never interrupt login setup. */ }
 let billingBusy=false, billingInitialized=false;
 async function verifyApplePurchase(item){
  const result=await authorized('/functions/v1/apple-subscription',{method:'POST',body:item});
