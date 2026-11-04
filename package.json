@@ -10,7 +10,7 @@
     "ios:add": "npx cap add ios",
     "ios:sync": "npx cap sync ios",
     "ios:open": "npx cap open ios",
-    "test:apple-server": "deno test --allow-read --allow-env scripts/apple-server.deno.mjs"
+    "test:apple-server": "deno test --allow-read --allow-env scripts/apple-x509.deno.mjs scripts/apple-server.deno.mjs"
   },
   "dependencies": {
     "@capacitor/core": "^7.4.0",
