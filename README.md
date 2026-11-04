@@ -15,3 +15,5 @@ Protótipo PWA para GitHub Pages; sem backend e sem IA real.
 - O ícone é uma arte gerada com formas geométricas, incluída no pacote.
 - A Apple App Store requer projeto nativo, testes, pagamento Apple Developer e aprovação. Esta versão é uma PWA pública.
 - Memórias da versão 0.1 não são importadas automaticamente para a 0.2.
+
+<!-- Reexecução de publicação GitHub Pages em 2026-11-04; nenhuma alteração funcional no site ou aplicativo. -->
