@@ -1,6 +1,8 @@
 import { Buffer } from 'node:buffer';
-import { Environment, SignedDataVerifier } from 'npm:@apple/app-store-server-library@3.1.0';
+import './apple-x509.ts';
 import { rootCertificates } from './apple-roots.ts';
+// Load only after the runtime adapters, before jsonwebtoken captures crypto.
+const { Environment, SignedDataVerifier } = await import('npm:@apple/app-store-server-library@3.1.0');
 export const productId = 'br.com.meulegado.plus.mensal';
 const bundleId = 'com.gabrielcruz.legadodigital';
 export function apple(environment: string) {
