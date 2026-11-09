@@ -10,7 +10,8 @@
     "ios:add": "npx cap add ios",
     "ios:sync": "npx cap sync ios",
     "ios:open": "npx cap open ios",
-    "test:apple-server": "deno test --allow-read --allow-env scripts/apple-x509.deno.mjs scripts/apple-server.deno.mjs"
+    "test:apple-server": "deno test --node-modules-dir=none --allow-read --allow-env scripts/apple-x509.deno.mjs scripts/apple-server.deno.mjs scripts/apple-quota.deno.mjs scripts/apple-review-quota.deno.mjs scripts/apple-review-conversation.deno.mjs scripts/apple-review-integration.deno.mjs",
+    "capacitor:sync:before": "node scripts/prepare_native_sync.mjs"
   },
   "dependencies": {
     "@capacitor/core": "^7.4.0",

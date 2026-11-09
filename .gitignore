@@ -1,0 +1,10 @@
+node_modules/
+web/
+ios/
+build/
+.DS_Store
+.env*
+!.env.example
+*.p8
+*.p12
+*.mobileprovision

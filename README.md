@@ -15,3 +15,17 @@ Protótipo PWA para GitHub Pages; sem backend e sem IA real.
 - O ícone é uma arte gerada com formas geométricas, incluída no pacote.
 - A Apple App Store requer projeto nativo, testes, pagamento Apple Developer e aprovação. Esta versão é uma PWA pública.
 - Memórias da versão 0.1 não são importadas automaticamente para a 0.2.
+
+<!-- Reexecução de publicação GitHub Pages em 2026-11-04; nenhuma alteração funcional no site ou aplicativo. -->
+
+## Candidata iOS com assinaturas Apple (9/11/2026)
+
+A edição atual usa Grátis (10 interações) e Meu Legado Plus (100 interações), com compra/restauração exclusivamente pelo StoreKit. A edição gratuita de outubro é histórica. Todos os workflows iOS montam o mesmo pacote com `node scripts/prepare_apple_build.mjs`; não executar o preparador gratuito antigo.
+
+Validação local: `npm ci`, `npm run check`, `npm test` e `npm run test:apple-server` (este último requer Deno). Preparar o bundle não publica nem submete nada. A publicação remota continua dependendo de autorização e dos bloqueios descritos no relatório.
+
+- [Revisão e limites de acesso Sandbox](docs/APP_STORE_REVIEW_20261109.md)
+- [Guia da revisão atual](docs/APP_STORE_REVIEW_1_0.md)
+- [Notas locais em rascunho](docs/APP_REVIEW_NOTES_DRAFT_20261109.md)
+
+Continuação autorizada: [CocoaPods, compilação local sem assinatura e Sandbox isolado](docs/APPLE_REVIEW_SANDBOX_20261109.md). Solução preparada e testada localmente; ativação/conta de revisão/custos de IA ainda exigem autorização específica.

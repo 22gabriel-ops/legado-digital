@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <script>
-window.LEGACY_APPLE_BILLING_READY = false; // Enabled only in the dedicated test build.
+window.LEGACY_APPLE_BILLING_READY = false; // Enabled only in the packaged iOS build; the website never starts a purchase.
 
 /* Redireciona apenas a pagina inicial do dominio comercial.
    O app iOS e os links de autenticacao continuam intactos. */
@@ -180,23 +180,24 @@ select{width:100%;display:block;min-height:50px;padding:12px 14px;border:1px sol
 <label class="checkboxlabel"><input id="account-consent" type="checkbox">Autorizo o Legado Digital a entrar em contato pelo WhatsApp para apresentar o serviço e iniciar a entrevista. Posso pedir para parar quando desejar.</label>
 <div class="actions"><button id="save-phone">Salvar número</button><button id="cancel-phone-edit" class="secondary hidden">Cancelar alteração</button></div></div>
 <div id="saved-phone-panel" class="hidden"><p class="muted" id="saved-phone-label"></p><button id="edit-phone" class="inline">Alterar número</button><div class="actions"><button id="welcome-test" type="button" disabled>Enviar mensagem de teste</button></div><p class="muted">Disponível somente para o titular e número autorizados na Meta durante os testes.</p></div></div>
-<div class="card" id="legacy-chat-card"><h2>Conversar com meu Legado 🌳</h2><p class="muted">Uma conversa natural para construir sua história. Este Legado é uma representação por IA, não a pessoa real.</p><div id="chat-messages" class="chat-messages" role="log" aria-live="polite"><div class="chat-bubble theirs">Oi! Quero conhecer sua história. Como você gostaria de começar?</div></div><div class="chat-compose"><textarea id="chat-input" rows="2" maxlength="1600" placeholder="Escreva sua mensagem para o seu Legado..." aria-label="Mensagem para meu Legado"></textarea><button id="chat-send" type="button">Enviar</button></div><p id="chat-status" class="muted" role="status"></p><p id="chat-quota" class="muted" aria-live="polite">Consultando franquia mensal...</p></div>
+<div class="card" id="legacy-chat-card"><h2 id="legacy-chat-title">Conversar com meu Legado 🌳</h2><p class="muted" id="legacy-chat-description">Uma conversa natural para construir sua história. Este Legado é uma representação por IA, não a pessoa real.</p><div id="chat-messages" class="chat-messages" role="log" aria-live="polite"><div class="chat-bubble theirs">Oi! Quero conhecer sua história. Como você gostaria de começar?</div></div><div class="chat-compose"><textarea id="chat-input" rows="2" maxlength="1600" placeholder="Escreva sua mensagem para o seu Legado..." aria-label="Mensagem para meu Legado"></textarea><button id="chat-send" type="button">Enviar</button></div><p id="chat-status" class="muted" role="status"></p><p id="chat-quota" class="muted" aria-live="polite">Consultando franquia mensal...</p></div>
 <div class="card"><h2>Meu Legado no WhatsApp 🌳</h2><p>Seu Legado nasce nas conversas naturais com você. A IA vai aprendendo seu jeito de falar, sem formulários nem comandos.</p><div class="actions"><a style="display:inline-block;background:#ab8650;color:white;text-decoration:none;padding:12px 16px;border-radius:10px;font-weight:700" href="https://wa.me/5531983116972?text=Ol%C3%A1%2C%20Legado%20Digital%21" target="_blank" rel="noopener noreferrer">Conversar com meu Legado ↗</a></div><p class="muted">No Grátis e no Plus, apenas o titular verificado interage com seu Legado.</p></div>
-<div class="card"><h2>Meu plano</h2><p><strong id="legacy-plan-label">Grátis — R$ 0/mês</strong></p><p class="muted" id="legacy-plan-desc">10 interações por mês, renovadas automaticamente sem acúmulo. Assinaturas ainda em preparação.</p><p><a href="#subscription-card" id="view-plans-link">Ver os três planos e condições →</a></p></div>
+<div class="card"><h2>Meu plano</h2><p><strong id="legacy-plan-label">Grátis — R$ 0/mês</strong></p><p class="muted" id="legacy-plan-desc">10 interações por mês, renovadas automaticamente sem acúmulo.</p><p><a href="#subscription-card" id="view-plans-link">Ver planos e assinatura →</a></p></div>
 <div class="card"><h2>Minhas memórias 🌳</h2><p>A personalidade do seu Legado nasce das conversas naturais com você. Suas memórias são preservadas mesmo se você mudar de plano.</p><p class="muted">Importação de conversas do WhatsApp e do ChatGPT: planejada para a versão 2. Não disponível nesta versão.</p></div>
 <div class="card" id="subscription-card">
 <h2>Escolha seu plano 🌳</h2>
 <p class="muted">Seu Legado continua com você. Escolha a franquia mensal ideal para suas conversas.</p>
 <div style="display:grid;gap:12px">
 <div style="border:1px solid #e8e0d4;border-radius:14px;padding:17px;background:#fff"><strong>Grátis · R$ 0</strong><p class="muted">10 interações mensais, sem cartão. Suas memórias continuam preservadas.</p><span id="plan-free-indicator" class="muted">Plano inicial</span></div>
-<div style="border:2px solid #b28b54;border-radius:14px;padding:17px;background:#fffaf2"><strong style="font-size:19px">Meu Legado Plus</strong><p style="font:400 29px Georgia,serif;margin:10px 0">R$ 19,90 <span style="font:13px Inter,Arial,sans-serif;color:#756b60">/ mês</span></p><p>100 interações por mês para desenvolver e conversar com seu Legado.</p><p class="muted">Franquia compartilhada entre aplicativo, site e WhatsApp. Renovação automática mensal, sem acúmulo de interações.</p><button type="button" id="subscribe-plus" disabled>Assinatura em preparação</button><p class="muted" id="subscription-feedback" role="status">A assinatura será feita exclusivamente no aplicativo para iPhone ou iPad, pela App Store. A compra ainda está em preparação.</p></div>
+<div style="border:2px solid #b28b54;border-radius:14px;padding:17px;background:#fffaf2"><strong style="font-size:19px">Meu Legado Plus</strong><p style="font:400 29px Georgia,serif;margin:10px 0"><span id="plus-price">R$ 19,90</span> <span style="font:13px Inter,Arial,sans-serif;color:#756b60">/ mês</span></p><p>100 interações por mês para desenvolver e conversar com seu Legado.</p><p class="muted">Franquia compartilhada entre aplicativo, site e WhatsApp. Renovação automática mensal, sem acúmulo de interações.</p><button type="button" id="subscribe-plus" disabled>Contrate no aplicativo para iPhone ou iPad</button><p class="muted" id="subscription-feedback" role="status">No iPhone e iPad, o Meu Legado Plus é contratado exclusivamente pelo sistema de compras da App Store. Este site não processa assinaturas.</p></div>
 </div>
-<div style="border:1px solid #e8e0d4;border-radius:14px;padding:17px;background:#fff"><strong>Meu Legado Completo · R$ 99,90/mês</strong><p class="muted">Inclui os recursos do Plus e prevê um número próprio de WhatsApp para compartilhar seu Legado com pessoas autorizadas. Recurso em preparação, sujeito à disponibilidade. 100 interações mensais compartilhadas entre os canais e convidados autorizados, sujeitas à disponibilidade do recurso.</p><span class="muted">Ainda não disponível para assinatura</span></div>
-<div class="actions"><button type="button" class="secondary" id="restore-purchases" disabled>Restaurar compras (em preparação)</button></div>
-<p class="muted">Pagamento e cancelamento exclusivamente pela sua conta Apple. Site e WhatsApp não recebem pagamentos. <a href="./privacidade.html">Privacidade</a> · <a href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/">Termos de uso</a>.</p>
+<div id="future-complete-plan" style="border:1px solid #e8e0d4;border-radius:14px;padding:17px;background:#fff"><strong>Meu Legado Completo · R$ 99,90/mês</strong><p class="muted">Inclui os recursos do Plus e prevê um número próprio de WhatsApp para compartilhar seu Legado com pessoas autorizadas. Recurso em preparação, sujeito à disponibilidade. 100 interações mensais compartilhadas entre os canais e convidados autorizados, sujeitas à disponibilidade do recurso.</p><span class="muted">Ainda não disponível para assinatura</span></div>
+<div class="actions"><button type="button" class="secondary" id="restore-purchases" disabled>Restaure sua assinatura no aplicativo iOS</button><button type="button" class="secondary hidden" id="retry-apple-products">Tentar consultar a App Store novamente</button></div>
+<p class="muted">As assinaturas realizadas no iPhone e iPad são cobradas, renovadas e gerenciadas pela App Store. Você pode cancelar a renovação nas configurações de Assinaturas da sua Conta Apple. O site não realiza cobranças. <a href="./privacidade.html">Privacidade</a> · <a href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/">Termos de uso</a>.</p>
 </div>
-<div class="card"><h2>Minhas interações 🌳</h2><p>Seu plano Grátis prevê <strong>10 interações por mês</strong>. O Plus prevê <strong>100 interações por mês</strong> por R$ 19,90/mês.</p><p>Uma interação corresponde a uma mensagem enviada e à resposta do Legado. As franquias renovam a cada mês, sem acumular saldo. O consumo é contabilizado pelo servidor e compartilhado entre WhatsApp, site e aplicativo. Ao atingir o limite, novas interações de IA ficam bloqueadas até a renovação mensal ou a disponibilização de créditos adicionais.</p><p id="legacy-usage-status" class="muted" role="status">Consultando consumo mensal...</p><p class="muted">O bloqueio automático da franquia está ativo. As assinaturas pagas ainda estão em preparação e não há cobrança ativa nesta versão.</p></div>
-<div class="card"><h2>Meu número exclusivo</h2><p>No Completo (R$ 99,90/mês), o seu Legado poderá ter um número próprio para conversar com familiares e amigos autorizados. Recurso em implantação e sujeito a disponibilidade. A franquia para convidados ainda será definida.</p></div>
+<div class="card hidden" id="apple-review-card"><h2>Teste da assinatura Apple</h2><p>Use apenas dados fictícios. A conversa de teste e suas 100 interações ficam separadas da conversa normal. Nenhuma cobrança é feita pela Apple neste teste.</p><button id="enter-apple-review" type="button">Abrir conversa de teste</button><button id="leave-apple-review" type="button" class="secondary hidden">Voltar à conversa normal</button><p id="apple-review-feedback" class="muted" role="status"></p></div>
+<div class="card"><h2>Minhas interações 🌳</h2><p>Seu plano Grátis prevê <strong>10 interações por mês</strong>. O Plus prevê <strong>100 interações por mês</strong> por R$ 19,90/mês.</p><p>Uma interação corresponde a uma mensagem enviada e à resposta do Legado. As franquias renovam a cada mês, sem acumular saldo. O consumo é contabilizado pelo servidor e compartilhado entre WhatsApp, site e aplicativo. Ao atingir o limite, novas interações de IA ficam bloqueadas até a renovação mensal.</p><p id="legacy-usage-status" class="muted" role="status">Consultando consumo mensal...</p><p class="muted">O bloqueio automático da franquia está ativo. O plano Plus pode ser contratado pelo aplicativo para iPhone e iPad, usando as compras integradas da App Store; este site não oferece contratação.</p></div>
+<div class="card" id="future-exclusive-number"><h2>Meu número exclusivo</h2><p>No Completo (R$ 99,90/mês), o seu Legado poderá ter um número próprio para conversar com familiares e amigos autorizados. Recurso em implantação e sujeito a disponibilidade. A franquia para convidados ainda será definida.</p></div>
 <div class="card"><h2>Guardiões do meu legado</h2><p class="muted">Indique um guardião principal e um substituto. As indicações são privadas e não concedem acesso às suas memórias.</p><div class="actions"><button id="open-guardians" type="button">Cadastrar guardiões</button></div></div>
 <div class="card"><h2>Minha conta</h2><p class="muted">Você pode solicitar a exclusão da conta e dos dados associados no banco ativo. A operação é irreversível.</p><button id="delete-account" class="danger">Excluir minha conta e memórias</button><p class="muted">A exclusão exige confirmação de senha. Cópias de segurança e registros operacionais podem seguir os prazos de retenção aplicáveis.</p></div>
 </section></main>
@@ -248,17 +249,38 @@ async function api(endpoint,{method='GET',body,token,headers={}}={}) {
  if(!response.ok){const detalhe=typeof data==='object'&&data!==null?(data.msg||data.error_description||data.message||data.error||data.code||'Erro do servidor'):String(data);throw Error(mensagemEmPortugues(detalhe));}
  return data;
 }
+let sessionRefresh=null;
 async function refreshSession(){
- if(!session?.refresh_token)throw Error('Sessão encerrada');
- const s=await api('/auth/v1/token?grant_type=refresh_token',{method:'POST',body:{refresh_token:session.refresh_token}});
- if(!s.user && session.user)s.user=session.user;
- keepSession(s);return s;
+ const previous=session;
+ if(!previous?.refresh_token)throw Error('Sessão encerrada');
+ if(sessionRefresh?.session===previous)return sessionRefresh.promise;
+ const flight={session:previous};
+ flight.promise=(async()=>{
+  const s=await api('/auth/v1/token?grant_type=refresh_token',{method:'POST',body:{refresh_token:previous.refresh_token}});
+  if(session!==previous)throw Error('A conta mudou durante a operação. Entre novamente para continuar.');
+  if(!s.user && previous.user)s.user=previous.user;
+  keepSession(s);return s;
+ })();
+ sessionRefresh=flight;
+ try{return await flight.promise}finally{if(sessionRefresh===flight)sessionRefresh=null}
 }
+
 async function authorized(endpoint,options={}){
+ const {expectedOwner,...request}=options;
+ const owner=expectedOwner||session?.user?.id;
+ const check=()=>{if(!session?.access_token||!owner||session.user?.id!==owner)throw Error('A conta mudou durante a operação. Entre novamente para continuar.')};
  if(!session?.access_token)throw Error('Entre na sua conta.');
+ check();
  if(session.expires_at&&Date.now()/1000>session.expires_at-60)await refreshSession();
- try{return await api(endpoint,{...options,token:session.access_token})}
- catch(e){if(/jwt expired|invalid jwt|token has expired/i.test(e.message)){await refreshSession();return api(endpoint,{...options,token:session.access_token})}throw e}
+ check();
+ try{const data=await api(endpoint,{...request,token:session.access_token});check();return data}
+ catch(e){
+  check();
+  if(/jwt expired|invalid jwt|token has expired/i.test(e.message)){
+   await refreshSession();check();const data=await api(endpoint,{...request,token:session.access_token});check();return data;
+  }
+  throw e;
+ }
 }
 
 function busy(id,val){$(id).disabled=val}
@@ -329,20 +351,41 @@ $('confirm-whatsapp-code').onclick=async()=>{
  finally{busy('confirm-whatsapp-code',false)}
 };
 async function loadLegacyPlan(){
+ const context=chatContext();
+ if(context.review){
+  try{
+   const status=await authorized(context.endpoint,{method:'POST',body:{action:'status'},expectedOwner:context.owner});
+   if(!sameChatContext(context))return;
+   if(status.environment!=='Sandbox')throw Error('Ambiente de teste inválido.');
+   const active=status.active===true&&status.usage?.limit===100;
+   $('legacy-plan-label').textContent=active?'Meu Legado Plus — teste Apple':'Teste Apple inativo';
+   $('legacy-plan-desc').textContent=active?'100 interações mensais na conversa de teste. A conversa normal permanece separada.':'A assinatura de teste expirou ou não está ativa. Restaure a compra ou volte à conversa normal.';
+   const summary=active?`${status.usage.used} de 100 interações de teste usadas neste mês · ${status.usage.remaining} restantes.`:'A conversa de teste está indisponível.';
+   $('legacy-usage-status').textContent=$('chat-quota').textContent=summary;
+   $('chat-send').disabled=$('chat-input').disabled=!active;
+  }catch{
+   if(!sameChatContext(context))return;
+   $('chat-send').disabled=$('chat-input').disabled=true;
+   $('legacy-plan-desc').textContent='Não foi possível confirmar a assinatura de teste. Nenhuma interação da conversa normal será usada.';
+   $('chat-quota').textContent=$('legacy-usage-status').textContent='Teste indisponível. Tente novamente ou volte à conversa normal.';
+  }
+  return;
+ }
  try{
-  const rows=await authorized('/rest/v1/legacy_user_entitlements?select=plan,active_until&limit=1');
-  const p=rows?.[0], active=!!p?.active_until&&Date.parse(p.active_until)>Date.now();
-  const tier=active&&['complete','shared','plus','exclusive'].includes(p.plan)?p.plan:'essential';
-  const exclusive=['shared','exclusive'].includes(tier), plus=['complete','plus'].includes(tier);
-  $('legacy-plan-label').textContent=exclusive?'Completo — R$ 99,90/mês':plus?'Plus — R$ 19,90/mês':'Grátis — R$ 0/mês';
-  $('legacy-plan-desc').textContent=exclusive?'Inclui os benefícios do Plus e prevê WhatsApp exclusivo quando provisionado. 100 interações mensais compartilhadas, após ativação do recurso.':plus?'100 interações por mês, renovadas sem acúmulo.':'10 interações por mês, renovadas sem acúmulo.';
+  // Match the server's allowance rule: only an active Production Apple purchase grants Plus.
+  const rows=await authorized('/rest/v1/legacy_apple_subscriptions?select=active,active_until&environment=eq.Production&product_id=eq.br.com.meulegado.plus.mensal');
+  if(!sameChatContext(context))return;
+  const plus=Array.isArray(rows)&&rows.some(p=>p.active===true&&Date.parse(p.active_until)>Date.now());
+  $('legacy-plan-label').textContent=plus?'Meu Legado Plus':'Grátis — R$ 0/mês';
+  $('legacy-plan-desc').textContent=plus?'100 interações por mês, renovadas sem acúmulo.':'10 interações por mês, renovadas sem acúmulo.';
   const now=new Date();const month=now.toISOString().slice(0,7)+'-01';
   const usage=await authorized('/rest/v1/legacy_usage_months?select=included_used&month_start=eq.'+month+'&limit=1');
-  const used=Number(usage?.[0]?.included_used||0);const limit=exclusive?100:plus?100:10;
+  if(!sameChatContext(context))return;
+  const used=Number(usage?.[0]?.included_used||0);const limit=plus?100:10;
   const summary=`${used} de ${limit} interações usadas neste mês · ${Math.max(0,limit-used)} restantes. Franquia compartilhada entre WhatsApp, site e aplicativo.`;
   $('legacy-usage-status').textContent=summary;
   $('chat-quota').textContent=summary;
- }catch{$('legacy-plan-desc').textContent='Não foi possível consultar seu plano agora.';$('legacy-usage-status').textContent='Contador indisponível. O controle de uso ainda depende do Supabase.';}
+ }catch{if(!sameChatContext(context))return;$('legacy-plan-desc').textContent='Não foi possível consultar seu plano agora.';$('legacy-usage-status').textContent='Contador indisponível. O controle de uso ainda depende do Supabase.';}
 }
 
 // Conversa autenticada integrada à área logada; falhas não bloqueiam o restante do app.
@@ -353,11 +396,13 @@ function addChatBubble(role,content){
  $('chat-messages').scrollTop=$('chat-messages').scrollHeight;
 }
 async function loadChat(){
+ const context=chatContext();
  $('chat-messages').replaceChildren();
  addChatBubble('assistant','Oi! Quero conhecer sua história. Como você gostaria de começar?');
  chatStatus('Carregando conversa...');
  try{
-  const data=await authorized('/functions/v1/legacy-conversation',{method:'POST',body:{action:'list'}});
+  const data=await authorized(context.endpoint,{method:'POST',body:{action:'list'},expectedOwner:context.owner});
+  if(!sameChatContext(context))return;
   if(Array.isArray(data.turns)&&data.turns.length){
    $('chat-messages').replaceChildren();
    const chronological=[...data.turns].sort((a,b)=>Date.parse(a.created_at||0)-Date.parse(b.created_at||0));
@@ -365,18 +410,20 @@ async function loadChat(){
    requestAnimationFrame(()=>{$('chat-messages').scrollTop=$('chat-messages').scrollHeight});
   }
   chatStatus('');
- }catch(e){chatStatus('A conversa não carregou: '+e.message+'. Você ainda pode usar as demais funções.')}
+ }catch(e){if(!sameChatContext(context))return;chatStatus('A conversa não carregou: '+e.message+'. Você ainda pode usar as demais funções.')}
 }
 $('chat-send').onclick=async()=>{
- const message=$('chat-input').value.trim();if(!message)return;
- $('chat-send').disabled=true;$('chat-input').disabled=true;chatStatus('Seu Legado está respondendo...');
+ const message=$('chat-input').value.trim();if(!message||$('chat-send').disabled)return;
+ const context=chatContext();
+ $('chat-send').disabled=true;$('chat-input').disabled=true;updateAppleReviewUI();chatStatus('Seu Legado está respondendo...');
  addChatBubble('user',message);const pendingBubble=$('chat-messages').lastElementChild;$('chat-input').value='';
  try{
-  const data=await authorized('/functions/v1/legacy-conversation',{method:'POST',body:{action:'message',message}});
+  const data=await authorized(context.endpoint,{method:'POST',body:{action:'message',message},expectedOwner:context.owner});
+  if(!sameChatContext(context))return;
   if(!data.reply)throw Error(data.error||'Resposta indisponível');
   addChatBubble('assistant',data.reply);chatStatus('');void loadLegacyPlan();
- }catch(e){if(pendingBubble?.parentNode)pendingBubble.remove();$('chat-input').value=message;chatStatus('Não foi possível confirmar o envio: '+e.message+'. Confira o histórico antes de tentar novamente para evitar duplicações.');void loadLegacyPlan()}
- finally{$('chat-send').disabled=false;$('chat-input').disabled=false;$('chat-input').focus()}
+ }catch(e){if(!sameChatContext(context))return;if(pendingBubble?.parentNode)pendingBubble.remove();$('chat-input').value=message;chatStatus('Não foi possível confirmar o envio: '+e.message+'. Confira o histórico antes de tentar novamente para evitar duplicações.');void loadLegacyPlan()}
+ finally{if(sameChatContext(context)){$('chat-send').disabled=false;$('chat-input').disabled=false;$('chat-input').focus()}updateAppleReviewUI()}
 };
 $('chat-input').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();if(!$('chat-send').disabled)$('chat-send').click()}});
 
@@ -388,46 +435,127 @@ try{
  // Plain HTML builds use Capacitor's injected native proxy without core's JS runtime.
  if(appleNative)appleStore=window.Capacitor.Plugins?.LegacyStoreKit||window.Capacitor.registerPlugin?.('LegacyStoreKit')||null;
 }catch{ /* An unavailable purchase bridge must never interrupt login setup. */ }
-let billingBusy=false, billingInitialized=false;
-async function verifyApplePurchase(item){
- const result=await authorized('/functions/v1/apple-subscription',{method:'POST',body:item});
+let billingBusy=false, billingInitialized=false, appleProduct=null;
+let appleReviewOwner=null,appleReviewAvailableOwner=null;
+function isAppleReview(){return !!appleReviewOwner&&appleReviewOwner===session?.user?.id}
+function chatContext(){return {owner:session?.user?.id,review:isAppleReview(),endpoint:isAppleReview()?'/functions/v1/apple-review-conversation':'/functions/v1/legacy-conversation'}}
+function sameChatContext(context){return context.owner===session?.user?.id&&context.review===isAppleReview()}
+function updateAppleReviewUI(){
+ const review=isAppleReview(),available=appleReviewAvailableOwner===session?.user?.id&&!!session?.user?.id;
+ $('apple-review-card').classList.toggle('hidden',!review&&!available);
+ $('enter-apple-review').classList.toggle('hidden',review);
+ $('enter-apple-review').disabled=!available||$('chat-send').disabled;
+ $('leave-apple-review').classList.toggle('hidden',!review);
+ // A failed/expired test must still let the user explicitly return to normal conversation.
+ $('legacy-chat-title').textContent=review?'Conversar com meu Legado — teste Apple':'Conversar com meu Legado 🌳';
+ $('legacy-chat-description').textContent=review?'Conversa de teste com IA, separada da conversa normal. Use apenas dados fictícios.':'Uma conversa natural para construir sua história. Este Legado é uma representação por IA, não a pessoa real.';
+}
+function offerAppleReview(result,owner){
+ appleReviewAvailableOwner=result.environment==='Sandbox'&&result.active&&result.sandboxReviewAvailable===true?owner:null;
+ updateAppleReviewUI();
+}
+$('enter-apple-review').onclick=async()=>{
+ const owner=session?.user?.id;
+ if(!owner||owner!==appleReviewAvailableOwner||$('chat-send').disabled)return;
+ $('enter-apple-review').disabled=true;
+ try{
+  const status=await authorized('/functions/v1/apple-review-conversation',{method:'POST',body:{action:'status'},expectedOwner:owner});
+  checkAppleOwner(owner);
+  if(status.environment!=='Sandbox'||status.active!==true||status.usage?.limit!==100)throw Error('A assinatura de teste não está ativa.');
+  appleReviewOwner=owner;$('chat-input').value='';updateAppleReviewUI();
+  $('apple-review-feedback').textContent='Você está na conversa de teste. A conversa normal não será usada.';
+  await loadLegacyPlan();await loadChat();
+ }catch(e){$('apple-review-feedback').textContent=e.message||'Não foi possível abrir o teste.'}
+ finally{updateAppleReviewUI()}
+};
+$('leave-apple-review').onclick=()=>{
+ appleReviewOwner=null;$('chat-input').value='';$('chat-send').disabled=$('chat-input').disabled=false;
+ $('apple-review-feedback').textContent='Você voltou à conversa normal.';updateAppleReviewUI();void loadLegacyPlan();void loadChat();
+};
+function updateAppleControls(){
+ $('subscribe-plus').disabled=billingBusy||!appleProduct||!session?.user?.id;
+ $('restore-purchases').disabled=billingBusy||!session?.user?.id;
+ $('retry-apple-products').disabled=billingBusy;
+}
+function checkAppleOwner(owner){
+ if(!owner||session?.user?.id!==owner)throw Error('A conta mudou durante a compra. Entre na conta original e use Restaurar compras.');
+}
+async function verifyApplePurchase(item,owner){
+ checkAppleOwner(owner);
+ const result=await authorized('/functions/v1/apple-subscription',{method:'POST',body:item,expectedOwner:owner});
+ checkAppleOwner(owner);
  if(!result.verified)throw Error('A compra ainda não foi validada.');
+ offerAppleReview(result,owner);
  await appleStore.finish({transactionId:item.transactionId});
+ checkAppleOwner(owner);
  await loadLegacyPlan();
- $('subscription-feedback').textContent=result.environment==='Sandbox'?'Compra de teste validada pela Apple. Nenhuma cobrança real; a franquia de produção permanece inalterada.':result.active?'Assinatura confirmada. Seu plano foi atualizado.':'A assinatura foi consultada e não está ativa.';
+ checkAppleOwner(owner);
+ $('subscription-feedback').textContent=result.environment==='Sandbox'
+  ?result.active?'Compra de teste validada pela Apple. Nenhuma cobrança real; a franquia de produção permanece inalterada.':'A assinatura de teste não está ativa. A franquia de produção permanece inalterada.'
+  :result.active?'Assinatura confirmada. Seu plano foi atualizado.':'A assinatura foi consultada e não está ativa.';
 }
-async function syncApplePurchases(restore=false){
+async function syncApplePurchases(restore=false,owner){
+ checkAppleOwner(owner);
  const data=await appleStore[restore?'restore':'pending']();
+ checkAppleOwner(owner);
  if(!data.transactions?.length){if(restore)$('subscription-feedback').textContent='Nenhuma assinatura ativa encontrada nesta conta Apple.';return;}
- for(const item of data.transactions)await verifyApplePurchase(item);
+ for(const item of data.transactions)await verifyApplePurchase(item,owner);
 }
-async function setupAppleBilling(){
- if(!window.LEGACY_APPLE_BILLING_READY||!appleStore||billingInitialized)return;
- billingInitialized=true;
+async function executeAppleAction(fn){
+ if(billingBusy||!session?.user?.id)return;
+ const owner=session.user.id;
+ billingBusy=true;updateAppleControls();
+ try{await fn(owner)}
+ catch(e){$('subscription-feedback').textContent=e.message||'Não foi possível confirmar a compra. Use Restaurar compras para tentar novamente.'}
+ finally{billingBusy=false;updateAppleControls()}
+}
+async function refreshAppleProduct(){
+ appleProduct=null;
+ const buy=$('subscribe-plus'),retry=$('retry-apple-products');
+ buy.textContent='Consultando App Store…';$('plus-price').textContent='Consultando preço…';
+ retry.classList.add('hidden');updateAppleControls();
  try{
   const {products}=await appleStore.products();
-  if(!products?.length)throw Error('Plano indisponível na App Store.');
-  const buy=$('subscribe-plus'),restore=$('restore-purchases');
-  buy.disabled=false;buy.textContent='Assinar Plus por '+products[0].price+'/mês';
-  restore.disabled=false;restore.textContent='Restaurar compras';
-  const execute=async(fn)=>{if(billingBusy)return;billingBusy=true;buy.disabled=restore.disabled=true;try{await fn()}catch(e){$('subscription-feedback').textContent=e.message||'Não foi possível confirmar a compra. Use Restaurar compras para tentar novamente.'}finally{billingBusy=false;buy.disabled=restore.disabled=false}};
-  buy.onclick=()=>execute(async()=>{
-   if(!session?.user?.id)throw Error('Entre na sua conta antes de assinar.');
-   const result=await appleStore.purchase({owner:session.user.id});
-   if(result.status==='purchased')await verifyApplePurchase({transactionId:result.transactionId,environment:result.environment});
-   else $('subscription-feedback').textContent=result.status==='pending'?'Aguardando aprovação da compra pela Apple.':'Compra cancelada. Nenhuma assinatura foi ativada.';
-  });
-  restore.onclick=()=>execute(()=>syncApplePurchases(true));
-  await appleStore.addListener('transaction',()=>execute(()=>syncApplePurchases()));
-  $('subscription-feedback').textContent='Pagamento pela App Store. A assinatura renova automaticamente até o cancelamento na sua conta Apple.';
-  await execute(()=>syncApplePurchases());
- }catch(e){billingInitialized=false;$('subscription-feedback').textContent=e.message||'App Store indisponível.';}
+  appleProduct=products?.find(p=>p.id==='br.com.meulegado.plus.mensal'&&p.price);
+  if(!appleProduct)throw Error('Plano indisponível na App Store. Você pode tentar novamente ou restaurar uma compra existente.');
+  $('plus-price').textContent=appleProduct.price;
+  buy.textContent='Assinar Plus por '+appleProduct.price+'/mês';
+  $('subscription-feedback').textContent='Pagamento pela App Store. A assinatura renova automaticamente até o cancelamento na sua Conta Apple.';
+ }catch(e){
+  appleProduct=null;buy.textContent='Assinatura indisponível';$('plus-price').textContent='Preço indisponível';
+  retry.classList.remove('hidden');$('subscription-feedback').textContent=e.message||'Não foi possível consultar a App Store.';
+ }
+ updateAppleControls();
+}
+async function setupAppleBilling(){
+ if(!window.LEGACY_APPLE_BILLING_READY||!session?.user?.id)return;
+ if(!appleStore){$('subscribe-plus').textContent='Assinatura indisponível';$('plus-price').textContent='Preço indisponível';$('subscription-feedback').textContent='Não foi possível acessar as compras da Apple neste dispositivo.';return;}
+ const buy=$('subscribe-plus'),restore=$('restore-purchases');
+ restore.textContent='Restaurar compras';updateAppleControls();
+ if(billingInitialized)return;
+ billingInitialized=true;
+ buy.onclick=()=>executeAppleAction(async owner=>{
+  if(!appleProduct)throw Error('Consulte a App Store antes de assinar.');
+  const result=await appleStore.purchase({owner});
+  checkAppleOwner(owner);
+  if(result.status==='purchased')await verifyApplePurchase({transactionId:result.transactionId,environment:result.environment},owner);
+  else $('subscription-feedback').textContent=result.status==='pending'?'Aguardando aprovação da compra pela Apple.':'Compra cancelada. Nenhuma assinatura foi ativada.';
+ });
+ restore.onclick=()=>executeAppleAction(owner=>syncApplePurchases(true,owner));
+ $('retry-apple-products').onclick=()=>executeAppleAction(()=>refreshAppleProduct());
+ try{await appleStore.addListener('transaction',()=>executeAppleAction(owner=>syncApplePurchases(false,owner)))}
+ catch{ /* Explicit restore remains available if the listener cannot be registered. */ }
+ await refreshAppleProduct();
+ await executeAppleAction(owner=>syncApplePurchases(false,owner));
 }
 
 function setLoggedIn(s){
+ const previousOwner=session?.user?.id;
  keepSession(s);const logged=!!s?.access_token;
+ if(previousOwner!==s?.user?.id){appleReviewOwner=null;appleReviewAvailableOwner=null;$('chat-input').value='';$('chat-send').disabled=$('chat-input').disabled=false;updateAppleReviewUI();}
  $('auth').classList.toggle('hidden',logged);$('account').classList.toggle('hidden',!logged);
  $('who').textContent=s?.user?.email||'';
+ if(appleStore&&window.LEGACY_APPLE_BILLING_READY)updateAppleControls();
  if(logged){displaySavedPhone(s.user);void loadPhoneVerification();void loadLegacyPlan();void loadChat();void setupAppleBilling();}
 }
 // Importacoes sao acessadas pelo link da area de conta.
