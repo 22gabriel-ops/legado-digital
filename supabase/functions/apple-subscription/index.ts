@@ -11,7 +11,7 @@ Deno.serve(async req => {
   try {
     const token = req.headers.get('authorization')?.match(/^Bearer (.+)$/i)?.[1];
     if (!token) return reply({error:'Entre na sua conta.'},401);
-    const admin = createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,{auth:{persistSession:false}});
+    const admin = createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
     const {data:{user},error} = await admin.auth.getUser(token);
     if (error || !user?.email_confirmed_at) return reply({error:'Confirme seu e-mail e entre novamente.'},401);
     const {transactionId,environment = 'Production'} = await req.json();
@@ -20,7 +20,7 @@ Deno.serve(async req => {
     const result = await subscription(String(transactionId), environment, user.id);
     const {error:saveError} = await admin.rpc('legacy_apply_apple_subscription',{p_subscription:result});
     if (saveError) throw Error('Persistence failed');
-    return reply({verified:true,active:result.active,environment,activeUntil:result.active_until,productionEntitlement:environment==='Production' && result.active});
+    return reply({verified:true,active:result.active,environment,activeUntil:result.active_until,productionEntitlement:environment==='Production' && result.active,sandboxReviewAvailable:environment==='Sandbox' && result.active && Deno.env.get('APPLE_IAP_SANDBOX_REVIEW_ENABLED')==='true'});
   } catch {
     // Never return signed payloads, private keys or SDK exceptions to clients/logs.
     return reply({error:'Não foi possível validar sua assinatura. A compra pode ser restaurada para tentar novamente.'},502);
