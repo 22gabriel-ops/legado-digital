@@ -19,7 +19,7 @@ Deno.serve(async req => {
     if(!t.transactionId)return new Response(null,{status:400});
     const result=await subscription(t.transactionId,environment);
     if(environment==='Sandbox' && !(Deno.env.get('APPLE_IAP_SANDBOX_TESTERS')||'').split(',').map(x=>x.trim()).includes(result.owner_id))return new Response(null,{status:200});
-    const admin=createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,{auth:{persistSession:false}});
+    const admin=createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
     const {error}=await admin.rpc('legacy_apply_apple_subscription',{p_subscription:result});
     if(error)throw Error('Persistence failed');
     return new Response(null,{status:200});
