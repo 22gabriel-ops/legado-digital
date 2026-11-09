@@ -7,7 +7,7 @@ Pod::Spec.new do |s|
   s.author = 'Legado Digital'
   s.source = { :git => 'https://github.com/22gabriel-ops/legado-digital.git', :tag => s.version.to_s }
   s.source_files = 'ios/Sources/**/*.swift'
-  s.ios.deployment_target = '14.0'
+  s.ios.deployment_target = '16.0'
   s.dependency 'Capacitor'
   s.frameworks = 'StoreKit'
   s.swift_version = '5.9'
