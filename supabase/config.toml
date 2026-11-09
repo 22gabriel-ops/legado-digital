@@ -1,5 +1,8 @@
 [functions.apple-subscription]
-verify_jwt = false # Authenticated inside handler with Supabase auth.getUser.
+verify_jwt = true # Preserve the live legacy JWT gateway plus mandatory auth.getUser inside the handler.
 
 [functions.apple-notifications]
 verify_jwt = false # Public endpoint; verifies Apple's signed notification and API status.
+
+[functions.apple-review-conversation]
+verify_jwt = true # Same gateway as live subscription validation; handler also enforces auth.getUser, flag and allowlist.
