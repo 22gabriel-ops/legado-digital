@@ -1,0 +1,25 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import {execFileSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
+test('native preparation raises app and pod minimums, preserves higher versions and is repeatable',t=>{
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),'legado-native-'));
+ t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
+ fs.mkdirSync(path.join(root,'ios/App/App.xcodeproj'),{recursive:true});
+ fs.mkdirSync(path.join(root,'ios/App/App'),{recursive:true});
+ const project=path.join(root,'ios/App/App.xcodeproj/project.pbxproj'),podfile=path.join(root,'ios/App/Podfile'),plist=path.join(root,'ios/App/App/Info.plist');
+ fs.writeFileSync(project,'IPHONEOS_DEPLOYMENT_TARGET = 14.0;\nIPHONEOS_DEPLOYMENT_TARGET = 17.0;');
+ fs.writeFileSync(podfile,"platform :ios, '14.0'\npost_install do |installer|\n  assertDeploymentTarget(installer)\nend\n");
+ fs.writeFileSync(plist,'<?xml version="1.0"?><plist><dict><key>CFBundleName</key><string>Legado</string></dict></plist>');
+ const script=fileURLToPath(new URL('./prepare_apple_native.mjs',import.meta.url));
+ execFileSync(process.execPath,[script],{cwd:root});
+ assert.match(fs.readFileSync(project,'utf8'),/16\.0/);assert.match(fs.readFileSync(project,'utf8'),/17\.0/);
+ assert.match(fs.readFileSync(podfile,'utf8'),/installer.pods_project.targets.each/);
+ assert.match(fs.readFileSync(podfile,'utf8'),/Gem::Version.new\(current\) < Gem::Version.new\('16.0'\)/);
+ const first=[project,podfile,plist].map(p=>fs.readFileSync(p,'utf8'));
+ execFileSync(process.execPath,[script],{cwd:root});
+ assert.deepEqual([project,podfile,plist].map(p=>fs.readFileSync(p,'utf8')),first);
+});
