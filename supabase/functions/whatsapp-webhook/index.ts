@@ -25,7 +25,11 @@ async function db(path: string, init: RequestInit = {}): Promise<any> {
       ...init.headers,
     },
   });
-  if (!response.ok) throw new Error("Database " + response.status + ": " + (await response.text()).slice(0, 350));
+  if (!response.ok) {
+    let code: string | null = null;
+    try { const error = await response.json(); if (typeof error?.code === "string" && /^[A-Z0-9]{5,12}$/i.test(error.code)) code = error.code; } catch { /* No raw database details in errors or logs. */ }
+    throw Object.assign(new Error("Database request failed"), { status: response.status, code });
+  }
   const text = await response.text();
   return text ? JSON.parse(text) : null;
 }
@@ -41,7 +45,12 @@ async function sendWhatsApp(sender: string, message: string): Promise<void> {
     headers: { Authorization: "Bearer " + env("WHATSAPP_ACCESS_TOKEN"), ...jsonHeaders },
     body: JSON.stringify({ messaging_product: "whatsapp", to: outboundRecipient(sender), type: "text", text: { body: message.slice(0, 3500) } }),
   });
-  if (!r.ok) throw new Error("WhatsApp send " + r.status + ": " + (await r.text()).slice(0, 350));
+  if (!r.ok) throw Object.assign(new Error("WhatsApp send failed"), { status: r.status });
+  let receipt: any = null;
+  try { receipt = await r.json(); } catch { /* An HTTP success alone is not an accepted send. */ }
+  if (receipt?.error != null || typeof receipt?.messages?.[0]?.id !== "string" || !receipt.messages[0].id.trim()) {
+    throw Object.assign(new Error("WhatsApp send receipt not confirmed"), { status: r.status });
+  }
 }
 async function historyFor(conversationId: string, limit = 16): Promise<HistoryRow[]> {
   const rows = await db("whatsapp_messages?select=direction,content&conversation_id=eq." + encodeURIComponent(conversationId) + "&order=created_at.desc&limit=" + limit);
@@ -74,7 +83,8 @@ function senderCandidates(sender: string): string[] {
   }
   return [...candidates];
 }
-async function verifiedOwnerSender(owner: string, sender: string): Promise<boolean> {
+type OwnerIdentity = { owner: string; canonicalSender: string };
+async function verifiedOwnerIdentity(owner: string, sender: string): Promise<OwnerIdentity | null> {
   const base = env("SUPABASE_URL");
   const key = env("SUPABASE_SERVICE_ROLE_KEY");
   const userRes = await fetch(base + "/auth/v1/admin/users/" + encodeURIComponent(owner), {
@@ -82,13 +92,17 @@ async function verifiedOwnerSender(owner: string, sender: string): Promise<boole
   });
   if (!userRes.ok) throw new Error("Unable to check owner WhatsApp identity: " + userRes.status);
   const user = await userRes.json();
+  if (user?.id !== owner) return null;
   const registered = String(user?.user_metadata?.whatsapp_phone || "").replace(/\D/g, "");
-  if (!registered || !senderCandidates(sender).includes("+" + registered) || user?.user_metadata?.whatsapp_opt_in !== true) return false;
+  if (!registered || !senderCandidates(sender).includes("+" + registered) || user?.user_metadata?.whatsapp_opt_in !== true) return null;
   const verified = await db("legacy_phone_verifications?select=id&owner_id=eq." + encodeURIComponent(owner) +
     "&phone_e164=eq." + encodeURIComponent("+" + registered) + "&status=eq.verified&limit=2");
-  return Array.isArray(verified) && verified.length === 1;
+  return Array.isArray(verified) && verified.length === 1 ? { owner, canonicalSender: registered } : null;
 }
-async function resolveOwner(sender: string): Promise<string | null> {
+async function verifiedOwnerSender(owner: string, sender: string): Promise<boolean> {
+  return (await verifiedOwnerIdentity(owner, sender)) !== null;
+}
+async function resolveOwner(sender: string): Promise<OwnerIdentity | null> {
   const candidates = senderCandidates(sender);
   if (!candidates.length) return null;
   const found: {owner_id: string; phone_e164: string}[] = [];
@@ -99,8 +113,113 @@ async function resolveOwner(sender: string): Promise<string | null> {
   }
   if (found.length !== 1) return null;
   const owner = String(found[0].owner_id);
-  if (!(await verifiedOwnerSender(owner, sender))) return null;
-  return owner;
+  return await verifiedOwnerIdentity(owner, sender);
+}
+
+const consentPrompt = "Oi! Sou o Meu Legado, uma representação por IA. Para conversar, preciso guardar nossas mensagens e usar o que você contar para construir seu perfil. Você concorda? Pode responder naturalmente que concorda. Não envie informações sensíveis.";
+const consentThanks = "Obrigado por autorizar! 🌳 Podemos conversar naturalmente. Quero conhecer suas histórias, uma de cada vez. O que você gostaria de me contar?";
+const consentRefusal = "Tudo bem. Não vou construir seu perfil por IA sem sua autorização. Se mudar de ideia, pode me dizer.";
+type Conversation = { id: string; legacy_user_id: string; sender_wa_id: string; consented_at: string | null };
+type ControlMessage = { id: string; conversation_id: string; direction: "in" | "out"; content: string; meta_message_id: string | null; created_at: string };
+function normalizedConsent(input: string): string {
+  return input.normalize("NFKC").replace(/[\u200b-\u200d\uFEFF]/g, "").toLocaleLowerCase("pt-BR").replace(/[,.!…]/g, " ").replace(/\s+/g, " ").trim();
+}
+function affirmativeConsent(input: string): boolean {
+  return ["sim", "concordo", "eu concordo", "aceito", "eu aceito", "autorizo", "eu autorizo", "sim eu concordo", "sim concordo", "sim aceito", "sim autorizo"].includes(normalizedConsent(input));
+}
+function negativeConsent(input: string): boolean {
+  return ["não", "nao", "não concordo", "nao concordo", "eu não concordo", "eu nao concordo", "não aceito", "nao aceito", "não autorizo", "nao autorizo", "não quero", "nao quero", "prefiro não", "prefiro nao"].includes(normalizedConsent(input));
+}
+function identitySenders(identity: OwnerIdentity): string[] {
+  return senderCandidates(identity.canonicalSender).map(phone => phone.slice(1));
+}
+function conversationScope(convo: Conversation, owner: string): string {
+  return "id=eq." + encodeURIComponent(convo.id) + "&legacy_user_id=eq." + encodeURIComponent(owner) + "&sender_wa_id=eq." + encodeURIComponent(convo.sender_wa_id);
+}
+function checkedConversation(rows: any, identity: OwnerIdentity): Conversation | null {
+  if (!Array.isArray(rows) || rows.length > 1) throw new Error("Ambiguous conversation");
+  if (!rows.length) return null;
+  const row = rows[0];
+  if (!row?.id || row.legacy_user_id !== identity.owner || !identitySenders(identity).includes(row.sender_wa_id)) throw new Error("Conversation identity mismatch");
+  return row;
+}
+async function conversationFor(identity: OwnerIdentity): Promise<Conversation> {
+  const path = "whatsapp_conversations?select=id,legacy_user_id,sender_wa_id,consented_at&legacy_user_id=eq." + encodeURIComponent(identity.owner) + "&sender_wa_id=in." + encodeURIComponent("(" + identitySenders(identity).join(",") + ")") + "&limit=3";
+  const existing = checkedConversation(await db(path), identity);
+  if (existing) return existing; // A unique legacy alias is reused, never migrated or merged.
+  try {
+    const rows = await db("whatsapp_conversations?select=id,legacy_user_id,sender_wa_id,consented_at", { method: "POST", headers: { Prefer: "return=representation" }, body: JSON.stringify({ legacy_user_id: identity.owner, sender_wa_id: identity.canonicalSender, consented_at: null }) });
+    const created = checkedConversation(rows === null ? [] : rows, identity);
+    if (created) return created;
+  } catch (error) { if ((error as any)?.code !== "23505") throw error; }
+  const recovered = checkedConversation(await db(path), identity);
+  if (!recovered) throw new Error("Conversation could not be confirmed");
+  return recovered;
+}
+async function readConversation(convo: Conversation, identity: OwnerIdentity): Promise<Conversation> {
+  const current = checkedConversation(await db("whatsapp_conversations?select=id,legacy_user_id,sender_wa_id,consented_at&" + conversationScope(convo, identity.owner) + "&limit=2"), identity);
+  if (!current || current.id !== convo.id) throw new Error("Conversation could not be confirmed");
+  return current;
+}
+async function confirmedConsent(convo: Conversation, identity: OwnerIdentity): Promise<void> {
+  if (!convo.consented_at) {
+    const rows = await db("whatsapp_conversations?select=id,legacy_user_id,sender_wa_id,consented_at&" + conversationScope(convo, identity.owner) + "&consented_at=is.null", { method: "PATCH", headers: { Prefer: "return=representation" }, body: JSON.stringify({ consented_at: new Date().toISOString(), updated_at: new Date().toISOString() }) });
+    const updated = checkedConversation(rows === null ? [] : rows, identity);
+    if (updated?.id === convo.id && updated.consented_at) return;
+  }
+  // Also handles an ignored Prefer header or another request completing first.
+  // A zero-row update alone is never proof of consent.
+  if (!(await readConversation(convo, identity)).consented_at) throw new Error("Consent persistence not confirmed");
+}
+async function inboundFor(convo: Conversation, input: string, messageId: string): Promise<{ row: ControlMessage; duplicate: boolean }> {
+  const path = "whatsapp_messages?select=id,conversation_id,direction,content,meta_message_id,created_at&conversation_id=eq." + encodeURIComponent(convo.id) + "&meta_message_id=eq." + encodeURIComponent(messageId) + "&limit=2";
+  const check = (rows: any): ControlMessage | null => {
+    if (!Array.isArray(rows) || rows.length > 1) throw new Error("Ambiguous inbound message");
+    if (!rows.length) return null;
+    const row = rows[0];
+    if (!row?.id || row.conversation_id !== convo.id || row.direction !== "in" || row.content !== input || row.meta_message_id !== messageId) throw new Error("Inbound identity mismatch");
+    return row;
+  };
+  // Detect a conflicting Meta ID with metadata only; read message contents
+  // exclusively inside this verified conversation.
+  const references = await db("whatsapp_messages?select=id,conversation_id,direction,meta_message_id&meta_message_id=eq." + encodeURIComponent(messageId) + "&limit=2");
+  if (!Array.isArray(references) || references.length > 1) throw new Error("Ambiguous inbound reference");
+  if (references.length) {
+    if (references[0]?.conversation_id !== convo.id || references[0]?.direction !== "in") throw new Error("Inbound reference identity mismatch");
+    const previous = check(await db(path));
+    if (!previous) throw new Error("Inbound persistence not confirmed");
+    return { row: previous, duplicate: true };
+  }
+  let duplicate = false;
+  try {
+    const rows = await db("whatsapp_messages?select=id,conversation_id,direction,content,meta_message_id,created_at", { method: "POST", headers: { Prefer: "return=representation" }, body: JSON.stringify({ conversation_id: convo.id, direction: "in", content: input, meta_message_id: messageId }) });
+    const created = check(rows === null ? [] : rows);
+    if (created) return { row: created, duplicate: false };
+  } catch (error) { if ((error as any)?.code !== "23505") throw error; duplicate = true; }
+  const recovered = check(await db(path));
+  if (!recovered) throw new Error("Inbound persistence not confirmed");
+  return { row: recovered, duplicate };
+}
+async function consentContext(convo: Conversation, inbound: ControlMessage, identity: OwnerIdentity): Promise<{ latest: boolean; replied: boolean; pending: boolean }> {
+  const rows: ControlMessage[] = await db("whatsapp_messages?select=id,conversation_id,direction,content,meta_message_id,created_at&conversation_id=eq." + encodeURIComponent(convo.id) + "&order=created_at.desc&limit=16");
+  if (!Array.isArray(rows) || rows.some(row => row.conversation_id !== convo.id)) throw new Error("Conversation history mismatch");
+  const matches = rows.filter(row => row.direction === "in" && row.meta_message_id === inbound.meta_message_id);
+  if (matches.length > 1) throw new Error("Ambiguous inbound history");
+  const position = rows.findIndex(row => row.id === inbound.id);
+  const latest = matches.length === 1 && rows.find(row => row.direction === "in")?.id === inbound.id && position >= 0;
+  const replied = position >= 0 && rows.slice(0, position).some(row => row.direction === "out");
+  const previous = position >= 0 ? rows[position + 1] : null;
+  let pending = latest && !replied && previous?.direction === "out" && previous.content === consentPrompt;
+  if (pending) {
+    const promptTime = Date.parse(previous!.created_at);
+    const phones = identitySenders(identity).map(phone => "+" + phone);
+    const stops = await db("legacy_whatsapp_optouts?select=opted_out_at&phone_e164=in." + encodeURIComponent("(" + phones.join(",") + ")") + "&order=opted_out_at.desc.nullslast&limit=1");
+    if (!Array.isArray(stops)) throw new Error("Opt-out context not confirmed");
+    // PARAR invalidates an older pending question only. It neither grants nor
+    // revokes profile consent, and commercial opt-out rows are never changed here.
+    pending = Number.isFinite(promptTime) && !stops.some(row => !Number.isFinite(Date.parse(row.opted_out_at)) || Date.parse(row.opted_out_at) >= promptTime);
+  }
+  return { latest, replied, pending: Boolean(pending) };
 }
 
 async function humanizedAnswer(owner: string, sender: string, input: string, conversationId: string): Promise<string> {
@@ -115,6 +234,7 @@ async function humanizedAnswer(owner: string, sender: string, input: string, con
   const stage = current?.stage === "ready" ? "ready" : "discovering";
   const prompt = [
     "Você é o Legado Digital, uma representação por inteligência artificial, não a pessoa real.",
+    "O propósito central do Legado Digital é preservar memórias e a personalidade do titular enquanto ele está vivo, para que, APÓS seu falecimento comprovado e a ativação autorizada, familiares e amigos expressamente autorizados possam conversar com sua representação digital, inclusive pelo WhatsApp quando essa funcionalidade estiver implementada. Hoje, a conversa disponível é com o próprio titular durante a construção do legado; acesso de terceiros após falecimento, verificação de óbito e planos dos visitantes são funcionalidades planejadas, NÃO disponíveis. Nunca diga que conversar com terceiros é contrário à finalidade do serviço, nem prometa que eles já conseguem conversar. Ao ser perguntado sobre o propósito, explique-o de forma acolhedora, clara e positiva, com emojis moderados, distinguindo visão futura de função ativa. Não se apresente como a pessoa real e não afirme que alguma memória foi salva sem confirmação. ",
     "Converse em português brasileiro, de forma humana e natural, sem comandos ou formulários. Não mencione MEMORIZAR, SALVAR, CANCELAR, APAGAR ou outros comandos.",
     "Quando o titular contar uma lembrança, responda ao conteúdo e identifique um fato explicitamente mencionado para sugerir como memória. A sugestão não é uma memória permanente: a aprovação deve ocorrer com confirmação explícita e autenticada no aplicativo. Nunca afirme que salvou sem confirmação.",
     "Na versão 1, a personalidade é construída apenas por conversas naturais do titular. Importações de WhatsApp e ChatGPT estão planejadas para a versão 2 e NÃO estão disponíveis agora. Nunca prometa importação já ativa, número exclusivo já provisionado ou cobrança já disponível.",
@@ -180,35 +300,44 @@ async function processMessage(msg: any): Promise<void> {
   }
   // Antes de qualquer leitura ou gravacao, recusar numeros nao verificados
   // quando a protecao estiver ativa. Enquanto false, preserva testes atuais.
-  const owner = await resolveOwner(sender);
+  const identity = await resolveOwner(sender);
   // Para a funcao em modo seguro: nunca compartilhar memoria de um titular com numero desconhecido.
-  if (!owner) {
-    await sendWhatsApp(sender, "Olá! 🌳 Seja bem-vindo ao Meu Legado!\n\nCrie sua conta gratuitamente:\nhttps://meulegadoapp.com.br/?app=1\n\n💬 Você escolhe como conversar com seu Legado:\n\n📱 Pelo site ou aplicativo: entre na sua conta e comece a conversar, sem precisar confirmar seu WhatsApp.\n\n💚 Pelo WhatsApp: confirme seu número dentro da sua conta para conversar por aqui.\n\nSuas histórias e memórias permanecem privadas e protegidas. ✨");
+  if (!identity) {
+    await sendWhatsApp(sender, "Olá! 🌳 Seja bem-vindo ao Meu Legado!\n\nCrie sua conta gratuitamente:\nhttps://legadodigitalapp.com.br/index.html?app=1\n\n💬 Você escolhe como conversar com seu Legado:\n\n📱 Pelo site ou aplicativo: entre na sua conta e comece a conversar, sem precisar confirmar seu WhatsApp.\n\n💚 Pelo WhatsApp: confirme seu número dentro da sua conta para conversar por aqui.\n\nSuas histórias e memórias permanecem privadas e protegidas. ✨");
     return;
   }
+  const owner = identity.owner;
   if (env("WHATSAPP_REQUIRE_VERIFICATION") === "true" && !(await verifiedOwnerSender(owner, sender))) return;
-  const ownerFilter = encodeURIComponent(owner);
-  const senderFilter = encodeURIComponent(sender);
-  const existing = await db("whatsapp_conversations?select=id,consented_at&legacy_user_id=eq." + ownerFilter + "&sender_wa_id=eq." + senderFilter + "&limit=1");
-  let convo = existing?.[0];
-  if (!convo) {
-    const created = await db("whatsapp_conversations", { method: "POST", headers: { Prefer: "return=representation" }, body: JSON.stringify({ legacy_user_id: owner, sender_wa_id: sender }) });
-    convo = created?.[0];
-  }
-  if (!convo?.id) throw new Error("Conversation could not be created");
-  const duplicate = await db("whatsapp_messages?select=id&meta_message_id=eq." + encodeURIComponent(msg.id) + "&limit=1");
-  if (duplicate?.length) return;
-  await db("whatsapp_messages", { method: "POST", body: JSON.stringify({ conversation_id: convo.id, direction: "in", content: input, meta_message_id: msg.id }) });
-  let output: string;
-  if (!convo.consented_at) {
-    // Consentimento exige escolha afirmativa; mensagens anteriores não concedem consentimento.
-    if (/^(aceito|concordo|sim[,.! ]*eu concordo|autorizo)[.! ]*$/i.test(input)) {
-      await db("whatsapp_conversations?id=eq." + encodeURIComponent(convo.id), { method: "PATCH", body: JSON.stringify({ consented_at: new Date().toISOString(), updated_at: new Date().toISOString() }) });
-      output = "Obrigado por autorizar! 🌳 Podemos conversar naturalmente. Quero conhecer suas histórias, uma de cada vez. O que você gostaria de me contar?";
+  const convo = await conversationFor(identity);
+  const inbound = await inboundFor(convo, input, String(msg.id));
+  const affirmative = affirmativeConsent(input);
+  // Ordinary messages never re-run AI/quotas on an inbound retry. Only an
+  // interrupted, explicit consent reply can resume the control flow below.
+  if (inbound.duplicate && !affirmative) return;
+  if (!convo.consented_at || inbound.duplicate) {
+    const context = await consentContext(convo, inbound.row, identity);
+    if (!context.latest || context.replied) return;
+    if (inbound.duplicate && !context.pending) return;
+    let reply: string;
+    if (affirmative && context.pending) {
+      await confirmedConsent(convo, identity);
+      reply = consentThanks;
+    } else if (inbound.duplicate) {
+      return;
     } else {
-      output = "Oi! Sou o Meu Legado, uma representação por IA. Para conversar, preciso guardar nossas mensagens e usar o que você contar para construir seu perfil. Você concorda? Pode responder naturalmente que concorda. Não envie informações sensíveis.";
+      reply = negativeConsent(input) ? consentRefusal : consentPrompt;
     }
-  } else if (/^(quero apagar (esta|minha|a) conversa|apague (esta|minha|a) conversa|excluir (esta|minha|a) conversa|apagar conversa|apagar)[.! ]*$/i.test(input)) {
+    // Reduce stale prompts after another request confirmed consent. This is
+    // a revalidation, not a cross-worker lock or an exactly-once guarantee.
+    if (reply !== consentThanks && (await readConversation(convo, identity)).consented_at) return;
+    const beforeSend = await consentContext(convo, inbound.row, identity);
+    if (!beforeSend.latest || beforeSend.replied) return;
+    await sendWhatsApp(sender, reply);
+    await db("whatsapp_messages", { method: "POST", body: JSON.stringify({ conversation_id: convo.id, direction: "out", content: reply }) });
+    return;
+  }
+  let output: string;
+  if (/^(quero apagar (esta|minha|a) conversa|apague (esta|minha|a) conversa|excluir (esta|minha|a) conversa|apagar conversa|apagar)[.! ]*$/i.test(input)) {
     output = "Posso excluir o histórico desta conversa do WhatsApp. Isso não exclui suas memórias confirmadas. Para confirmar, responda: Sim, quero excluir esta conversa.";
   } else if (/^sim[,! ]*quero excluir (esta|minha|a) conversa[.! ]*$/i.test(input)) {
     const last = (await historyFor(convo.id, 3)).filter((m) => m.direction === "out").at(-1);
@@ -270,7 +399,11 @@ Deno.serve(async (req) => {
     }
     return respond("OK");
   } catch (error) {
-    console.error("WhatsApp webhook processing failed", error instanceof Error ? error.message : String(error));
+    const failure = error as { status?: unknown; code?: unknown };
+    console.error("WhatsApp webhook processing failed", {
+      status: typeof failure?.status === "number" ? failure.status : null,
+      code: typeof failure?.code === "string" && /^[A-Z0-9]{5,12}$/i.test(failure.code) ? failure.code : null,
+    });
     return respond("Temporary error", 500);
   }
 });
