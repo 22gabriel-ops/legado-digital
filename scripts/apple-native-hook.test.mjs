@@ -50,6 +50,12 @@ test('fresh cap add reproduces deployment mismatch when the native preparation h
 test('fresh cap add runs the official preparation hook before its first pod install, and sync is repeatable',t=>{
  const f=fixture(t);const result=f.run('add','ios');assert.equal(result.status,0,result.stdout+result.stderr);
  assert.match(fs.readFileSync(f.log,'utf8'),/pod-install:16\.0/);
+ const plist=fs.readFileSync(path.join(f.root,'ios/App/App/Info.plist'),'utf8');
+ assert.match(plist,/<key>CFBundleDevelopmentRegion<\/key>\s*<string>pt-BR<\/string>/);
+ assert.match(plist,/<key>CFBundleLocalizations<\/key>\s*<array>\s*<string>pt-BR<\/string>\s*<\/array>/);
+ assert.match(plist,/<key>UIApplicationSupportsMultipleScenes<\/key>\s*<false\/>/);assert.match(plist,/UISceneStoryboardFile<\/key>\s*<string>Main<\/string>/);assert.doesNotMatch(plist,/<key>UIMainStoryboardFile<\/key>/);
+ assert.match(fs.readFileSync(path.join(f.root,'ios/App/App/AppDelegate.swift'),'utf8'),/class LegadoSceneDelegate: UIResponder, UIWindowSceneDelegate/);
+ assert.match(fs.readFileSync(path.join(f.root,'ios/App/App.xcodeproj/project.pbxproj'),'utf8'),/developmentRegion = "pt-BR";/);
  const podfile=path.join(f.root,'ios/App/Podfile');
  const before=fs.readFileSync(podfile,'utf8');
  assert.equal((before.match(/# Legado minimum iOS version/g)||[]).length,1);
