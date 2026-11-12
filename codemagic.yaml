@@ -117,7 +117,17 @@ workflows:
     name: iOS App Store - exige conta Apple
     max_build_duration: 60
     instance_type: mac_mini_m2
+    inputs:
+      release_version:
+        description: Versão aprovada para esta execução (por exemplo 1.0.1)
+        type: string
+      confirmed_build_max:
+        description: Maior build confirmado agora no App Store Connect
+        type: string
     environment:
+      vars:
+        LEGADO_RELEASE_VERSION: ${{ inputs.release_version }}
+        LEGADO_CONFIRMED_BUILD_MAX: ${{ inputs.confirmed_build_max }}
       node: 22
       xcode: latest
       ios_signing:
@@ -242,7 +252,17 @@ workflows:
     name: iOS Apple Billing - TestFlight candidate
     max_build_duration: 60
     instance_type: mac_mini_m2
+    inputs:
+      release_version:
+        description: Versão aprovada para esta execução (por exemplo 1.0.1)
+        type: string
+      confirmed_build_max:
+        description: Maior build confirmado agora no App Store Connect
+        type: string
     environment:
+      vars:
+        LEGADO_RELEASE_VERSION: ${{ inputs.release_version }}
+        LEGADO_CONFIRMED_BUILD_MAX: ${{ inputs.confirmed_build_max }}
       node: 22
       xcode: latest
       ios_signing:
