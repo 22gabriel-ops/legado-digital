@@ -188,14 +188,34 @@ workflows:
           project = pathlib.Path('ios/App/App.xcodeproj/project.pbxproj')
           content = project.read_text()
           import re
-          # Codemagic's CM_BUILD_NUMBER may be absent or reset; do not reuse a constant floor.
-          # UTC timestamp format YYDDDHHMMSS increases across runs and is greater than build 20.
+          # Required non-secret inputs, reviewed before one authorized workflow run.
+          # Proposed next version: 1.0.1. No implicit template version is allowed.
+          release_version = os.environ.get('LEGADO_RELEASE_VERSION', '').strip()
+          if not re.fullmatch(r'(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)', release_version):
+              raise SystemExit('Defina LEGADO_RELEASE_VERSION explicitamente; proposta revisável: 1.0.1')
+          if tuple(map(int, release_version.split('.'))) <= (1, 0, 0):
+              raise SystemExit('A versão deve superar a versão 1.0 já pronta para distribuição')
+          maximum_raw = os.environ.get('LEGADO_CONFIRMED_BUILD_MAX', '').strip()
+          if not re.fullmatch(r'[1-9]\d*', maximum_raw):
+              raise SystemExit('Defina LEGADO_CONFIRMED_BUILD_MAX após reconferir todos os uploads')
+          confirmed_maximum = int(maximum_raw)
+          observed_snapshot_maximum = 26313215553
+          if confirmed_maximum < observed_snapshot_maximum:
+              raise SystemExit('O máximo confirmado não pode ser inferior ao inventário já observado')
+          # Recheck upload history and UTC clock; run only one distribution workflow.
+          # This guard prevents collisions with the confirmed history, not parallel future runs.
           from datetime import datetime, timezone
           build_number = int(datetime.now(timezone.utc).strftime('%y%j%H%M%S'))
-          updated, n = re.subn(r'(CURRENT_PROJECT_VERSION\s*=\s*)\d+(;)', lambda m: m.group(1)+str(build_number)+m.group(2), content)
-          if n == 0:
+          if build_number <= confirmed_maximum:
+              raise SystemExit('Build UTC não supera o máximo confirmado; confira relógio e histórico')
+          updated, versions = re.subn(r'(MARKETING_VERSION\s*=\s*)(?:"[^"\n]+"|[^;\s]+)(;)', lambda m: m.group(1)+release_version+m.group(2), content)
+          if versions == 0:
+              raise SystemExit('MARKETING_VERSION não encontrado')
+          updated, builds = re.subn(r'(CURRENT_PROJECT_VERSION\s*=\s*)\d+(;)', lambda m: m.group(1)+str(build_number)+m.group(2), updated)
+          if builds == 0:
               raise SystemExit('CURRENT_PROJECT_VERSION não encontrado')
           project.write_text(updated)
+          print('Versão definida explicitamente:', release_version)
           print('Número da compilação definido para', build_number)
           PY
 
@@ -293,14 +313,34 @@ workflows:
           project = pathlib.Path('ios/App/App.xcodeproj/project.pbxproj')
           content = project.read_text()
           import re
-          # Codemagic's CM_BUILD_NUMBER may be absent or reset; do not reuse a constant floor.
-          # UTC timestamp format YYDDDHHMMSS increases across runs and is greater than build 20.
+          # Required non-secret inputs, reviewed before one authorized workflow run.
+          # Proposed next version: 1.0.1. No implicit template version is allowed.
+          release_version = os.environ.get('LEGADO_RELEASE_VERSION', '').strip()
+          if not re.fullmatch(r'(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)', release_version):
+              raise SystemExit('Defina LEGADO_RELEASE_VERSION explicitamente; proposta revisável: 1.0.1')
+          if tuple(map(int, release_version.split('.'))) <= (1, 0, 0):
+              raise SystemExit('A versão deve superar a versão 1.0 já pronta para distribuição')
+          maximum_raw = os.environ.get('LEGADO_CONFIRMED_BUILD_MAX', '').strip()
+          if not re.fullmatch(r'[1-9]\d*', maximum_raw):
+              raise SystemExit('Defina LEGADO_CONFIRMED_BUILD_MAX após reconferir todos os uploads')
+          confirmed_maximum = int(maximum_raw)
+          observed_snapshot_maximum = 26313215553
+          if confirmed_maximum < observed_snapshot_maximum:
+              raise SystemExit('O máximo confirmado não pode ser inferior ao inventário já observado')
+          # Recheck upload history and UTC clock; run only one distribution workflow.
+          # This guard prevents collisions with the confirmed history, not parallel future runs.
           from datetime import datetime, timezone
           build_number = int(datetime.now(timezone.utc).strftime('%y%j%H%M%S'))
-          updated, n = re.subn(r'(CURRENT_PROJECT_VERSION\s*=\s*)\d+(;)', lambda m: m.group(1)+str(build_number)+m.group(2), content)
-          if n == 0:
+          if build_number <= confirmed_maximum:
+              raise SystemExit('Build UTC não supera o máximo confirmado; confira relógio e histórico')
+          updated, versions = re.subn(r'(MARKETING_VERSION\s*=\s*)(?:"[^"\n]+"|[^;\s]+)(;)', lambda m: m.group(1)+release_version+m.group(2), content)
+          if versions == 0:
+              raise SystemExit('MARKETING_VERSION não encontrado')
+          updated, builds = re.subn(r'(CURRENT_PROJECT_VERSION\s*=\s*)\d+(;)', lambda m: m.group(1)+str(build_number)+m.group(2), updated)
+          if builds == 0:
               raise SystemExit('CURRENT_PROJECT_VERSION não encontrado')
           project.write_text(updated)
+          print('Versão definida explicitamente:', release_version)
           print('Número da compilação definido para', build_number)
           PY
 

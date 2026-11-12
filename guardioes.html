@@ -1,11 +1,11 @@
 <!doctype html>
-<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Legado Digital · Guardiões</title><meta name="theme-color" content="#faf8f3"><link rel="icon" type="image/svg+xml" href="./site/favicon.svg?v=13"><link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
 <style>
-:root{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:#30281f;background:#faf8f3}*{box-sizing:border-box}body{margin:0}main{max-width:650px;padding:26px 18px 70px;margin:auto}a{color:#906b3a}h1,h2{font-family:Georgia,serif;font-weight:400}h1{font-size:37px;margin:20px 0 12px}h2{font-size:25px;margin:0 0 12px}.card{background:#fff;border:1px solid #e9dfd0;border-radius:18px;padding:25px;margin:16px 0}.muted{color:#776d61;font-size:14px;line-height:1.65}.notice{background:#fff9ed;border:1px solid #ebddc1;border-radius:12px;padding:14px;font-size:13px;line-height:1.6}label{display:block;font-size:13px;font-weight:700;margin:15px 0 7px}input,select{display:block;width:100%;padding:14px;border:1px solid #d8cbbb;border-radius:10px;background:#fff;font:inherit}button{border:0;border-radius:10px;padding:13px 18px;background:#a98249;color:#fff;font-weight:700;cursor:pointer;margin:12px 8px 0 0}button.secondary{background:#f1eadf;color:#604b32}button.danger{background:#faece7;color:#983d32}button:disabled{opacity:.5}.hidden{display:none!important}.item{border-top:1px solid #eadfcd;padding:15px 0}.item strong{display:block}.status{font-size:13px;color:#765c37}#feedback{min-height:20px;font-size:14px}#feedback.error{color:#a6372d}#feedback.ok{color:#2e684c}
+:root{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:#30281f;background:#faf8f3}*{box-sizing:border-box}body{margin:0}main{max-width:650px;padding:26px 18px 70px;margin:auto}a{color:#906b3a}h1,h2{font-family:Georgia,serif;font-weight:400}h1{font-size:37px;margin:20px 0 12px}h2{font-size:25px;margin:0 0 12px}.card{background:#fff;border:1px solid #e9dfd0;border-radius:18px;padding:25px;margin:16px 0}.muted{color:#776d61;font-size:14px;line-height:1.65}.notice{background:#fff9ed;border:1px solid #ebddc1;border-radius:12px;padding:14px;font-size:13px;line-height:1.6}label{display:block;font-size:13px;font-weight:700;margin:15px 0 7px}input,select{display:block;width:100%;padding:14px;border:1px solid #d8cbbb;border-radius:10px;background:#fff;font:inherit}button{border:0;border-radius:10px;padding:13px 18px;background:#8f672e;color:#fff;font-weight:700;cursor:pointer;margin:12px 8px 0 0}button.secondary{background:#f1eadf;color:#604b32}button.danger{background:#faece7;color:#983d32}button:disabled{opacity:.5}button:not(.secondary):not(.danger):disabled{opacity:1;background:#e6dccb;color:#5f523e}button:focus-visible{outline:3px solid #775222;outline-offset:3px}.hidden{display:none!important}.item{border-top:1px solid #eadfcd;padding:15px 0}.item strong{display:block}.status{font-size:13px;color:#765c37}#feedback{min-height:20px;font-size:14px}#feedback.error{color:#a6372d}#feedback.ok{color:#2e684c}
 </style></head><body><main>
 <a href="./index.html?app=1">← Voltar à minha conta</a>
-<h1>Guardiões do legado</h1><p class="muted" id="build-info">Versão 12 · convites e aceites</p>
+<h1>Guardiões do legado</h1>
 <p class="muted">Escolha quem poderá cuidar do seu legado no futuro. Você pode indicar uma pessoa principal e uma substituta.</p>
 <div class="notice"><strong>Importante:</strong> este cadastro registra apenas sua indicação. Você poderá compartilhar um link de convite com cada pessoa. Aceitar o convite não concede acesso a memórias nem poderes de administração. A liberação futura exigirá um processo separado de verificação e autorização.</div>
 <p id="feedback" role="status" aria-live="polite"></p>
@@ -77,7 +77,7 @@
 </form></div></section>
 </main>
 <script>
-window.addEventListener('error',function(event){const gate=document.getElementById('gate');if(gate&&!gate.classList.contains('hidden')){gate.textContent='Erro ao carregar a página: '+(event.message||'Falha no JavaScript')+' · versão 12. Atualize com Ctrl+F5.';}});
+window.addEventListener('error',function(){const gate=document.getElementById('gate');if(gate&&!gate.classList.contains('hidden')){gate.textContent='Não foi possível carregar esta página. Feche e abra o aplicativo para tentar novamente.';}});
 'use strict';
 const BASE='https://rwzksewulqpzsdbuirrq.supabase.co';
 const KEY='sb_publishable_fxQIHucd5a62h64oCEZoIg_qcoMg3cZ';
@@ -87,19 +87,33 @@ let session=null,guardians=[],editing=null;
 const invitationId=new URLSearchParams(location.search).get('invite');
 function message(s,bad=false){$('feedback').textContent=s;$('feedback').className=bad?'error':'ok'}
 function saveSession(s){session=s;if(s)localStorage.setItem(STORE,JSON.stringify(s));else localStorage.removeItem(STORE)}
+function guardianErrorMessage(error,status){
+ const text=String(error?.message||error?.error||'');
+ // Preserve only the reviewed messages supplied by the invitation RPC.
+ const invitationMessages=['Confirme seu e-mail antes de responder','Convite não disponível para esta conta','Resposta inválida','Faça login para responder ao convite'];
+ if(invitationMessages.includes(text))return text;
+ if(status===401||error?.code==='28000'||error?.code==='PGRST301')return 'Sua sessão expirou. Entre novamente.';
+ if(status===403||error?.code==='42501')return 'Não foi possível realizar esta ação nesta conta.';
+ if(error?.code==='23505')return 'Já existe uma indicação com estes dados. Revise seus guardiões.';
+ if(error?.code==='23514')return 'Confira os dados do guardião e tente novamente.';
+ if(status===429)return 'Muitas tentativas. Aguarde um pouco e tente novamente.';
+ return 'Não foi possível concluir esta ação. Tente novamente.';
+}
 async function api(path,options={}) {
  if(!session?.access_token)throw Error('Entre na sua conta.');
  const call=async()=>{
-  const res=await fetch(BASE+path,{method:options.method||'GET',headers:{apikey:KEY,Authorization:'Bearer '+session.access_token,'Content-Type':'application/json',Prefer:'return=minimal'},body:options.body===undefined?undefined:JSON.stringify(options.body)});
-  if(!res.ok){let e;try{e=await res.json()}catch{}throw Error(e?.message||e?.error||'Falha no servidor ('+res.status+')')}
+  let res;
+  try{res=await fetch(BASE+path,{method:options.method||'GET',headers:{apikey:KEY,Authorization:'Bearer '+session.access_token,'Content-Type':'application/json',Prefer:'return=minimal'},body:options.body===undefined?undefined:JSON.stringify(options.body)})}
+  catch{throw Error('Não foi possível conectar. Verifique sua conexão e tente novamente.')}
+  if(!res.ok){let e;try{e=await res.json()}catch{}const failure=Error(guardianErrorMessage(e,res.status));failure.expiredJwt=/jwt expired|invalid jwt/i.test(String(e?.message||e?.error||''));throw failure}
   if(res.status===204)return null;const raw=await res.text();return raw?JSON.parse(raw):null;
  };
  if(session.expires_at&&Date.now()/1000>=session.expires_at-60)await refresh();
- try{return await call()}catch(e){if(/jwt expired|invalid jwt/i.test(e.message)){await refresh();return call()}throw e}
+ try{return await call()}catch(e){if(e.expiredJwt){await refresh();return call()}throw e}
 }
 async function refresh(){
  const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),12000);
- let res;try{res=await fetch(BASE+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:session.refresh_token}),signal:controller.signal})}catch(e){throw Error(e.name==='AbortError'?'A autenticação demorou mais de 12 segundos. Tente novamente.':'Não foi possível conectar ao Supabase.')}finally{clearTimeout(timer)}
+ let res;try{res=await fetch(BASE+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:session.refresh_token}),signal:controller.signal})}catch(e){throw Error(e.name==='AbortError'?'A autenticação demorou mais de 12 segundos. Tente novamente.':'Não foi possível conectar. Verifique sua conexão e tente novamente.')}finally{clearTimeout(timer)}
  if(!res.ok)throw Error('Sessão expirada. Entre novamente.');
  saveSession(await res.json());
 }
