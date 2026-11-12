@@ -42,9 +42,7 @@ type VerifyRow = {
 
 
 
-async function hashCode(id: string, code: string) {
-
-  const secret = env('OTP_HASH_SECRET');
+async function hashCode(id: string, code: string, secret: string) {
 
   if (secret.length < 32) throw new Error('OTP_HASH_SECRET must have at least 32 characters');
 
@@ -86,7 +84,23 @@ function generateCode() {
 
 
 
-Deno.serve(async (req) => {
+export type PhoneVerificationDependencies = {
+  env: (name: string) => string;
+  createClient: typeof createClient;
+  fetch: typeof fetch;
+  now: () => number;
+  generateCode: () => string;
+  hashCode: (id: string, code: string, secret: string) => Promise<string>;
+  logError: (...values: unknown[]) => void;
+  logInfo: (...values: unknown[]) => void;
+};
+const defaultDependencies: PhoneVerificationDependencies = {
+  env, createClient, fetch: (input, init) => fetch(input, init), now: () => Date.now(), generateCode, hashCode,
+  logError: (...values) => console.error(...values), logInfo: (...values) => console.info(...values),
+};
+
+export function createPhoneVerificationHandler(deps: PhoneVerificationDependencies = defaultDependencies) {
+  return async (req: Request) => {
   const origin = req.headers.get('origin');
   const reply = (data: unknown, status = 200) => jsonReply(data, status, origin);
   if (origin && !allowedOrigins.has(origin)) return reply({ error: 'Origem não autorizada' }, 403);
@@ -100,17 +114,17 @@ Deno.serve(async (req) => {
 
   if (!/^Bearer\s+\S+$/i.test(authHeader)) return reply({ error: 'Faça login' }, 401);
 
-  const url = env('SUPABASE_URL');
+  const url = deps.env('SUPABASE_URL');
 
-  const serviceKey = env('SUPABASE_SERVICE_ROLE_KEY');
+  const serviceKey = deps.env('SUPABASE_SERVICE_ROLE_KEY');
 
-  const publicKey = env('SUPABASE_ANON_KEY');
+  const publicKey = deps.env('SUPABASE_ANON_KEY');
 
   if (!url || !serviceKey || !publicKey) return reply({ error: 'Configuração incompleta' }, 503);
 
-  const authClient = createClient(url, publicKey, { global: { headers: { Authorization: authHeader } }, auth: { persistSession: false, autoRefreshToken: false } });
+  const authClient = deps.createClient(url, publicKey, { global: { headers: { Authorization: authHeader } }, auth: { persistSession: false, autoRefreshToken: false } });
 
-  const admin = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
+  const admin = deps.createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
 
   const { data: identity, error: identityError } = await authClient.auth.getUser(authHeader.replace(/^Bearer\s+/i, ''));
 
@@ -126,11 +140,37 @@ Deno.serve(async (req) => {
 
   const action = body.action;
 
+  let reservation: { id: string; owner: string; expiresAt: string } | null = null;
+  let submissionStarted = false;
+  const pendingFields = (expiresAt: string) => ({ expires_at: expiresAt, retry_after_seconds: Math.max(0, Math.ceil((Date.parse(expiresAt) - deps.now()) / 1000)) });
+  const uncertainReply = (code: string) => reply({
+    error: 'Não foi possível confirmar o envio do pedido ao WhatsApp. Se recebeu o código, ele pode ser usado. Aguarde a verificação expirar antes de solicitar outro.',
+    code, ...(reservation ? pendingFields(reservation.expiresAt) : {}),
+  }, 503);
+  const unconfirmedStateReply = (phase: 'before_send' | 'rejected') => reply({
+    error: (phase === 'before_send' ? 'O envio do código não foi iniciado. ' : 'O WhatsApp recusou o pedido de código. ') +
+      'Não foi possível confirmar o cancelamento da verificação. Aguarde a verificação expirar antes de solicitar outro código.',
+    code: 'verification_state_unconfirmed', ...(reservation ? pendingFields(reservation.expiresAt) : {}),
+  }, 503);
+  async function cancelReservation() {
+    if (!reservation) return false;
+    try {
+      const { data, error } = await admin.from('legacy_phone_verifications').update({ status: 'cancelled' })
+        .eq('id', reservation.id).eq('owner_id', reservation.owner).eq('status', 'pending').select('id');
+      if (error || !Array.isArray(data) || data.length !== 1 || data[0]?.id !== reservation.id) {
+        deps.logError('OTP cancellation not confirmed'); return false;
+      }
+      reservation = null;
+      return true;
+    } catch { deps.logError('OTP cancellation unavailable'); return false; }
+  }
+
+
   try {
 
     if (action === 'request') {
 
-      if (env('PHONE_VERIFICATION_ENABLED') !== 'true') return reply({ error: 'Verificação de telefone aguardando liberação' }, 503);
+      if (deps.env('PHONE_VERIFICATION_ENABLED') !== 'true') return reply({ error: 'Verificação de telefone aguardando liberação' }, 503);
 
       const phone = String(body.phone || '');
 
@@ -142,25 +182,32 @@ Deno.serve(async (req) => {
 
       if (accountPhone !== phone.slice(1)) return reply({ error: 'O telefone deve ser o cadastrado na sua conta' }, 403);
 
+      // Validate configuration before reserving a verification or creating a code.
+      const secret = deps.env('OTP_HASH_SECRET');
+      const token = deps.env('WHATSAPP_ACCESS_TOKEN');
+      const numberId = deps.env('WHATSAPP_PHONE_NUMBER_ID');
+      if (secret.length < 32 || !token || !numberId)
+        return reply({ error: 'A confirmação pelo WhatsApp está temporariamente indisponível. Tente novamente mais tarde.', code: 'verification_unavailable' }, 503);
+
       // Prevent takeover of numbers already verified by another owner.
 
       const { data: verified, error: verifiedError } = await admin.from('legacy_phone_verifications').select('id,owner_id').eq('phone_e164', phone).eq('status', 'verified').limit(1);
 
       if (verifiedError) throw verifiedError;
 
-      if (verified?.some(v => v.owner_id !== user.id)) return reply({ error: 'Número já vinculado a outra conta' }, 409);
+      if (verified?.some((v: { owner_id: string }) => v.owner_id !== user.id)) return reply({ error: 'Número já vinculado a outra conta' }, 409);
 
-      const { data: pending, error: pendingError } = await admin.from('legacy_phone_verifications').select('id,owner_id,phone_e164,status,created_at,expires_at,attempts').eq('owner_id', user.id).eq('status', 'pending').limit(1);
+      const { data: pending, error: pendingError } = await admin.from('legacy_phone_verifications').select('id,owner_id,phone_e164,status,created_at,expires_at,attempts').eq('owner_id', user.id).eq('status', 'pending').limit(2);
 
       if (pendingError) throw pendingError;
+      if (pending && pending.length > 1) return reply({ error: 'Não foi possível identificar uma única verificação pendente. Tente novamente mais tarde ou contate o suporte.', code: 'verification_pending_ambiguous' }, 409);
 
       const existing = pending?.[0] as VerifyRow | undefined;
 
       // No resend while an unexpired request exists, including across function restarts.
 
-      if (existing && new Date(existing.expires_at).getTime() > Date.now())
-
-        return reply({ error: 'Existe uma confirmação pendente. Aguarde até o vencimento para solicitar outra.' }, 429);
+      if (existing && new Date(existing.expires_at).getTime() > deps.now())
+        return reply({ error: 'Existe uma verificação pendente. Se você recebeu o código, ele ainda pode ser usado. Aguarde o vencimento para solicitar outro.', code: 'verification_pending', ...pendingFields(existing.expires_at) }, 429);
 
       if (existing) {
 
@@ -176,33 +223,31 @@ Deno.serve(async (req) => {
 
       if (recentError) throw recentError;
 
-      if (recent?.[0] && Date.now() - new Date(recent[0].created_at).getTime() < delayBetweenSends)
+      if (recent?.[0] && deps.now() - new Date(recent[0].created_at).getTime() < delayBetweenSends)
 
         return reply({ error: 'Aguarde antes de solicitar outro código' }, 429);
 
-      const expiry = new Date(Date.now() + tenMinutes).toISOString();
+      const expiry = new Date(deps.now() + tenMinutes).toISOString();
 
       const { data: attempt, error: createError } = await admin.from('legacy_phone_verifications').insert({ owner_id: user.id, phone_e164: phone, expires_at: expiry }).select('id').single();
 
       if (createError) throw createError;
+      if (!attempt?.id) throw new Error('Verification reservation unavailable');
+      reservation = { id: attempt.id, owner: user.id, expiresAt: expiry };
 
-      const code = generateCode();
+      const code = deps.generateCode();
 
-      const hash = await hashCode(attempt.id, code);
+      const hash = await deps.hashCode(attempt.id, code, secret);
 
       const { error: storeError } = await admin.from('legacy_phone_codes').insert({ verification_id: attempt.id, code_hash: hash });
 
       if (storeError) throw storeError;
 
-      const token = env('WHATSAPP_ACCESS_TOKEN');
+      const graph = deps.env('META_GRAPH_VERSION') || 'v26.0';
 
-      const numberId = env('WHATSAPP_PHONE_NUMBER_ID');
-
-      if (!token || !numberId) throw new Error('WhatsApp unavailable');
-
-      const graph = env('META_GRAPH_VERSION') || 'v26.0';
-
-      const sent = await fetch(`https://graph.facebook.com/${graph}/${numberId}/messages`, {
+      // Once transport begins, a thrown/ambiguous result may already have been accepted.
+      submissionStarted = true;
+      const sent = await deps.fetch(`https://graph.facebook.com/${graph}/${numberId}/messages`, {
 
         method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
 
@@ -228,28 +273,24 @@ Deno.serve(async (req) => {
 
       });
 
-      if (!sent.ok) {
-
-        console.error('Meta verification template error', sent.status);
-
-        await admin.from('legacy_phone_verifications').update({ status: 'cancelled' }).eq('id', attempt.id).eq('status', 'pending');
-
-        return reply({ error: 'Não foi possível enviar o código. Consulte o status do modelo na Meta.' }, 502);
-
-      }
-
-      // HTTP 200/201 da Meta significa aceitação para processamento, não entrega no aparelho.
       const receipt = await sent.json().catch(() => null);
-      const messageId = typeof receipt?.messages?.[0]?.id === 'string' ? receipt.messages[0].id : null;
-      const messageStatus = typeof receipt?.messages?.[0]?.message_status === 'string' ? receipt.messages[0].message_status : 'accepted';
-      if (!messageId) {
-        console.error('OTP Meta response missing message ID', { httpStatus: sent.status });
-        await admin.from('legacy_phone_verifications').update({ status: 'cancelled' }).eq('id', attempt.id).eq('status', 'pending');
-        return reply({ error: 'A Meta não confirmou o recebimento do pedido. Tente novamente mais tarde.' }, 502);
+      const messageId = Array.isArray(receipt?.messages) && typeof receipt.messages[0]?.id === 'string' && receipt.messages[0].id.trim() ? receipt.messages[0].id : null;
+      const graphError = receipt?.error;
+      // Gateways/timeouts/5xx and contradictory or unreadable bodies are uncertain.
+      const explicitRejection = sent.status >= 400 && sent.status < 500 && sent.status !== 408 && !messageId &&
+        Number.isInteger(graphError?.code) && graphError.code > 0 && typeof graphError.message === 'string' &&
+        graphError.message.trim().length > 0 && (graphError.is_transient === false || graphError.is_transient === undefined);
+      if (!sent.ok && explicitRejection) {
+        deps.logError('OTP request explicitly rejected', { httpStatus: sent.status, providerCode: graphError.code });
+        if (!await cancelReservation()) return unconfirmedStateReply('rejected');
+        return reply({ error: 'O WhatsApp não aceitou a solicitação do código. Tente novamente mais tarde.', code: 'verification_send_rejected' }, 502);
       }
-      // Registrar apenas metadados de transporte. NUNCA registrar o OTP, telefone ou token.
-      console.info('OTP Meta request accepted', { messageId, messageStatus, httpStatus: sent.status });
-      return reply({ ok: true, message: 'Código solicitado à Meta. Aguarde o recebimento no WhatsApp.', expires_in_seconds: 600 });
+      if (!sent.ok || !messageId || graphError) return uncertainReply('verification_submission_unknown');
+
+      // An accepted request is not proof of delivery; do not expose code, phone or token.
+      const messageStatus = typeof receipt?.messages?.[0]?.message_status === 'string' ? receipt.messages[0].message_status : 'accepted';
+      deps.logInfo('OTP request accepted for processing', { messageId, messageStatus, httpStatus: sent.status });
+      return reply({ ok: true, message: 'Solicitação do código recebida para processamento. Aguarde no WhatsApp; a entrega ainda não foi confirmada.', expires_in_seconds: 600 });
 
     }
 
@@ -259,15 +300,19 @@ Deno.serve(async (req) => {
 
       if (!/^\d{6}$/.test(code)) return reply({ error: 'Informe os 6 dígitos' }, 400);
 
-      const { data: pending, error: lookupError } = await admin.from('legacy_phone_verifications').select('id,owner_id,phone_e164,status,created_at,expires_at,attempts').eq('owner_id', user.id).eq('status', 'pending').limit(1);
+      const secret = deps.env('OTP_HASH_SECRET');
+      if (secret.length < 32) return reply({ error: 'A confirmação pelo WhatsApp está temporariamente indisponível. Tente novamente mais tarde.', code: 'verification_unavailable' }, 503);
+
+      const { data: pending, error: lookupError } = await admin.from('legacy_phone_verifications').select('id,owner_id,phone_e164,status,created_at,expires_at,attempts').eq('owner_id', user.id).eq('status', 'pending').limit(2);
 
       if (lookupError) throw lookupError;
+      if (pending && pending.length > 1) return reply({ error: 'Não foi possível identificar uma única verificação pendente. Tente novamente mais tarde ou contate o suporte.', code: 'verification_pending_ambiguous' }, 409);
 
       const row = pending?.[0] as VerifyRow | undefined;
 
       if (!row) return reply({ error: 'Nenhuma verificação pendente' }, 404);
 
-      if (Date.now() >= new Date(row.expires_at).getTime()) {
+      if (deps.now() >= new Date(row.expires_at).getTime()) {
 
         await admin.from('legacy_phone_verifications').update({ status: 'expired' }).eq('id', row.id).eq('status', 'pending');
 
@@ -291,9 +336,9 @@ Deno.serve(async (req) => {
 
       if (codeError) throw codeError;
 
-      if (!equalHash(secretRow.code_hash, await hashCode(row.id, code))) return reply({ error: 'Código incorreto' }, 400);
+      if (!equalHash(secretRow.code_hash, await deps.hashCode(row.id, code, secret))) return reply({ error: 'Código incorreto' }, 400);
 
-      const timestamp = new Date().toISOString();
+      const timestamp = new Date(deps.now()).toISOString();
 
       // Check expiration again on update; the database trigger also enforces it.
 
@@ -315,10 +360,19 @@ Deno.serve(async (req) => {
 
   } catch (error) {
 
-    console.error('Phone verification failed', error instanceof Error ? error.message : String(error));
-
+    // Do not log provider payloads, OTPs, phones, tokens or arbitrary error details.
+    deps.logError('Phone verification failed', { submissionStarted, reserved: !!reservation });
+    if (reservation) {
+      if (submissionStarted) return uncertainReply('verification_submission_unknown');
+      if (!await cancelReservation()) return unconfirmedStateReply('before_send');
+      return reply({ error: 'Não foi possível preparar a solicitação do código. Tente novamente mais tarde.', code: 'verification_prepare_failed' }, 503);
+    }
     return reply({ error: 'Não foi possível concluir a verificação' }, 500);
 
   }
 
-});
+
+  };
+}
+
+Deno.serve(createPhoneVerificationHandler());
